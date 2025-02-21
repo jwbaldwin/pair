@@ -1,5 +1,10 @@
 # Pair
 
+> Pair (pAIr) is an application for people who use AI for different things.
+> Pair custom prompts and project context with your preferred AI models so
+> you never have to repeat yourself.
+> Think of it like having customized pairing partners at your fingertips.
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies
