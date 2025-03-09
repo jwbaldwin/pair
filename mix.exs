@@ -59,8 +59,9 @@ defmodule Pair.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:req, "~> 0.5"},
-      {:langchain, "~> 0.3"},
-      {:oban, "~> 2.19"}
+      {:oban, "~> 2.19"},
+      {:server_sent_events, "~> 0.2"},
+      {:instructor, "~> 0.1.0"},
     ]
   end
 
