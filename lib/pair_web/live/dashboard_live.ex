@@ -5,9 +5,7 @@ defmodule PairWeb.DashboardLive do
   def mount(_params, _session, socket) do
     {:ok,
      assign(socket,
-       messages: [
-         %{role: :assistant, content: "yo"}
-       ],
+       messages: [],
        form: to_form(%{"message" => ""})
      )}
   end
@@ -20,12 +18,10 @@ defmodule PairWeb.DashboardLive do
   def handle_event("send", %{"message" => message}, socket) when message != "" do
     messages = socket.assigns.messages ++ [%{role: :user, content: message}]
 
-    messages = messages ++ [%{role: :assistant, content: ""}]
-
     pid = self()
 
     Task.start(fn ->
-      stream_response_from_anthropic(message, pid)
+      stream_response_from_anthropic(messages, pid)
     end)
 
     {:noreply,
@@ -36,34 +32,47 @@ defmodule PairWeb.DashboardLive do
 
   def handle_event("send", _, socket), do: {:noreply, socket}
 
-  defp stream_response_from_anthropic(message, pid) do
+  defp stream_response_from_anthropic(conversation, pid) do
     anthropic_api =
       Req.new(
         base_url: "https://api.anthropic.com/v1/messages",
         headers: %{
-          "x-api-key" => "",
+          "x-api-key" => Application.get_env(:pair, :anthropic_api_key),
           "anthropic-version" => "2023-06-01",
           "content-type" => "application/json"
         }
       )
 
+    # # Converstion, with the user message as the last message
+    # conversation =
+    #   Enum.map(conversation, fn msg ->
+    #     %{"role" => Atom.to_string(msg.role), "content" => msg.content}
+    #   end)
+
     body = %{
       model: "claude-3-5-sonnet-20241022",
       max_tokens: 1024,
-      messages: [%{role: "user", content: message}],
+      messages: conversation,
       stream: true
     }
 
     Req.post!(anthropic_api,
       json: body,
       into: fn {:data, data}, {req, res} ->
-        buffer = Req.Request.get_private(req, :sse_buffer, "")
-        {events, buffer} = ServerSentEvents.parse(buffer <> data)
-        req = Req.Request.put_private(req, :sse_buffer, buffer)
+        case res do
+          %{status: 200} ->
+            buffer = Req.Request.get_private(req, :sse_buffer, "")
+            {events, buffer} = ServerSentEvents.parse(buffer <> data)
+            req = Req.Request.put_private(req, :sse_buffer, buffer)
 
-        process_sse_events(events, pid)
+            process_sse_events(events, pid)
 
-        {:cont, {req, res}}
+            {:cont, {req, res}}
+
+          %{status: 400} ->
+            IO.inspect("Error 400 from Anthropic API")
+            {:halt, {req, res}}
+        end
       end
     )
   end
@@ -85,7 +94,10 @@ defmodule PairWeb.DashboardLive do
               nil
           end
 
-        _message_start ->
+        "message_start" ->
+          send(pid, {:stream_start})
+
+        _message_stop_or_message_delta ->
           nil
       end
     end)
@@ -103,6 +115,12 @@ defmodule PairWeb.DashboardLive do
     updated_messages = List.replace_at(messages, last_index, updated_message)
 
     {:noreply, assign(socket, :messages, updated_messages)}
+  end
+
+  @impl true
+  def handle_info({:stream_start}, socket) do
+    {:noreply,
+     assign(socket, :messages, socket.assigns.messages ++ [%{role: :assistant, content: ""}])}
   end
 
   @impl true

@@ -7,6 +7,8 @@
 # General application configuration
 import Config
 
+config :pair, :anthropic_api_key, System.get_env("ANTHROPIC_API_KEY")
+
 config :pair,
   ecto_repos: [Pair.Repo],
   generators: [timestamp_type: :utc_datetime]
