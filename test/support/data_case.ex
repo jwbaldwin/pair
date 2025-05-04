@@ -24,6 +24,7 @@ defmodule Pair.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import Pair.DataCase
+      import Pair.Factory
     end
   end
 

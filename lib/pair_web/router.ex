@@ -20,6 +20,12 @@ defmodule PairWeb.Router do
     live "/", DashboardLive, :index
   end
 
+  scope "/api", PairWeb do
+    pipe_through :api
+
+    post "/audio", AudioUploadController, :create
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", PairWeb do
   #   pipe_through :api

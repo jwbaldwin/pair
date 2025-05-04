@@ -8,6 +8,7 @@
 import Config
 
 config :pair, :anthropic_api_key, System.get_env("ANTHROPIC_API_KEY")
+config :pair, :openai_api_key, System.get_env("OPENAI_API_KEY")
 
 config :pair,
   ecto_repos: [Pair.Repo],
@@ -23,6 +24,11 @@ config :pair, PairWeb.Endpoint,
   ],
   pubsub_server: Pair.PubSub,
   live_view: [signing_salt: "fSNy6bUd"]
+
+config :pair, Pair.Repo,
+  start_apps_before_migration: [:uuid_v7],
+  migration_primary_key: [type: :binary_id],
+  migration_foreign_key: [type: :binary_id]
 
 # Configures the mailer
 #

@@ -35,6 +35,7 @@ defmodule Pair.MixProject do
       {:phoenix, "~> 1.7.20"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
+      {:uuid_v7, "~> 0.6.0"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
@@ -62,6 +63,10 @@ defmodule Pair.MixProject do
       {:oban, "~> 2.19"},
       {:server_sent_events, "~> 0.2"},
       {:instructor, "~> 0.1.0"},
+      {:mix_test_interactive, "~> 4.3", only: :dev, runtime: false},
+      {:tidewave, "~> 0.1", only: :dev},
+      {:mimic, "~> 1.7", only: :test},
+      {:ex_machina, "~> 2.7.0", only: :test}
     ]
   end
 
