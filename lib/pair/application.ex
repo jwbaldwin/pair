@@ -11,6 +11,7 @@ defmodule Pair.Application do
       PairWeb.Telemetry,
       Pair.Repo,
       {DNSCluster, query: Application.get_env(:pair, :dns_cluster_query) || :ignore},
+      {Oban, Application.fetch_env!(:pair, Oban)},
       {Phoenix.PubSub, name: Pair.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Pair.Finch},

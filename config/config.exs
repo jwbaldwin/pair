@@ -7,6 +7,12 @@
 # General application configuration
 import Config
 
+config :pair, Oban,
+  engine: Oban.Engines.Basic,
+  notifier: Oban.Notifiers.Postgres,
+  queues: [default: 10],
+  repo: Pair.Repo
+
 config :pair, :anthropic_api_key, System.get_env("ANTHROPIC_API_KEY")
 config :pair, :openai_api_key, System.get_env("OPENAI_API_KEY")
 

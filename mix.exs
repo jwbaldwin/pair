@@ -65,6 +65,7 @@ defmodule Pair.MixProject do
       {:instructor, "~> 0.1.0"},
       {:mix_test_interactive, "~> 4.3", only: :dev, runtime: false},
       {:tidewave, "~> 0.1", only: :dev},
+      {:igniter, "~> 0.5", only: [:dev]},
       {:mimic, "~> 1.7", only: :test},
       {:ex_machina, "~> 2.7.0", only: :test}
     ]
