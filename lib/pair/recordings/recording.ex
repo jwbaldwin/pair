@@ -3,10 +3,13 @@ defmodule Pair.Recordings.Recording do
 
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{}
+  @type id :: UUIDv7.t()
+
   schema "recordings" do
     field :upload_url, :string
     field :transcription, :string
-    field :actions, :string
+    field :actions, :binary
 
     timestamps(type: :utc_datetime)
   end

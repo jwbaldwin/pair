@@ -1,34 +1,25 @@
 defmodule Pair.Recordings.Workers.TranscriptionWorker do
+  @moduledoc """
+  Worker to send a recording to OpenAI for transcription and store the result.
+  If the transcription is successful, we will enqueue a job to generate insights.
+  """
   use Oban.Worker
 
+  alias Pair.Clients.OpenAI
   alias Pair.Recordings
   alias Pair.Recordings.Recording
+  alias Pair.Recordings.Workers.ActionsWorker
+
+  require Logger
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"id" => id, "upload_url" => upload_url}}) do
-    IO.inspect(upload_url)
+    Logger.info("Transcribing recording at #{id}:#{upload_url}")
 
-    whisper_api =
-      Req.new(
-        base_url: "https://api.openai.com/v1/audio/transcriptions",
-        headers: %{
-          "Authorization" => "Bearer #{Application.get_env(:pair, :openai_api_key)}",
-          "Content-Type" => "multipart/form-data"
-        }
-      )
-
-    resp =
-      Req.post!(whisper_api,
-        form: [
-          file: {:file, upload_url},
-          model: "gpt-4o-transcribe"
-        ]
-      )
-
-    IO.inspect(resp)
-
-    with {:ok, recording} <- Recordings.fetch_recording(id) do
-      Recordings.update_recording(recording, %{transcription: resp.body})
+    with {:ok, transcription} <- OpenAI.transcribe(upload_url),
+         {:ok, recording} <- Recordings.fetch_recording(id),
+         {:ok, _} <- Recordings.update_recording(recording, %{transcription: transcription}) do
+      ActionsWorker.enqueue(recording)
     end
   end
 

@@ -15,8 +15,6 @@ defmodule Pair.Application do
       {Phoenix.PubSub, name: Pair.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Pair.Finch},
-      # Start a worker by calling: Pair.Worker.start_link(arg)
-      # {Pair.Worker, arg},
       # Start to serve requests, typically the last entry
       PairWeb.Endpoint
     ]

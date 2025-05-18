@@ -1,6 +1,6 @@
 defmodule Pair.Recordings.Services.SaveRecording do
   @moduledoc """
-  Service to save a recording to blob storage
+  Service to save a recording locally and enqueue a transcription job.
   """
 
   alias Pair.Recordings

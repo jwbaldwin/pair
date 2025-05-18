@@ -1,6 +1,8 @@
 defmodule PairWeb.DashboardLive do
   use PairWeb, :live_view
 
+  alias Pair.Clients.Anthropic
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok,
@@ -18,10 +20,8 @@ defmodule PairWeb.DashboardLive do
   def handle_event("send", %{"message" => message}, socket) when message != "" do
     messages = socket.assigns.messages ++ [%{role: :user, content: message}]
 
-    pid = self()
-
     Task.start(fn ->
-      stream_response_from_anthropic(messages, pid)
+      Anthropic.stream_response(self(), messages)
     end)
 
     {:noreply,
@@ -32,87 +32,11 @@ defmodule PairWeb.DashboardLive do
 
   def handle_event("send", _, socket), do: {:noreply, socket}
 
-  defp stream_response_from_anthropic(conversation, pid) do
-    anthropic_api =
-      Req.new(
-        base_url: "https://api.anthropic.com/v1/messages",
-        headers: %{
-          "x-api-key" => Application.get_env(:pair, :anthropic_api_key),
-          "anthropic-version" => "2023-06-01",
-          "content-type" => "application/json"
-        }
-      )
-
-    # # Converstion, with the user message as the last message
-    # conversation =
-    #   Enum.map(conversation, fn msg ->
-    #     %{"role" => Atom.to_string(msg.role), "content" => msg.content}
-    #   end)
-
-    body = %{
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1024,
-      messages: conversation,
-      stream: true
-    }
-
-    Req.post!(anthropic_api,
-      json: body,
-      into: fn {:data, data}, {req, res} ->
-        case res do
-          %{status: 200} ->
-            buffer = Req.Request.get_private(req, :sse_buffer, "")
-            {events, buffer} = ServerSentEvents.parse(buffer <> data)
-            req = Req.Request.put_private(req, :sse_buffer, buffer)
-
-            process_sse_events(events, pid)
-
-            {:cont, {req, res}}
-
-          %{status: 400} ->
-            IO.inspect("Error 400 from Anthropic API")
-            {:halt, {req, res}}
-        end
-      end
-    )
-  end
-
-  defp process_sse_events([], _pid), do: "No content received."
-
-  defp process_sse_events(events, pid) do
-    Enum.each(events, fn event ->
-      case event.event do
-        "content_block_stop" ->
-          send(pid, {:stream_complete})
-
-        "content_block_delta" ->
-          case Jason.decode(event.data) do
-            {:ok, %{"delta" => %{"text" => text}}} ->
-              send(pid, {:stream_chunk, text})
-
-            _ ->
-              nil
-          end
-
-        "message_start" ->
-          send(pid, {:stream_start})
-
-        _message_stop_or_message_delta ->
-          nil
-      end
-    end)
-  end
-
   @impl true
   def handle_info({:stream_chunk, chunk}, socket) do
-    messages = socket.assigns.messages
-    last_index = length(messages) - 1
-
-    last_message = Enum.at(messages, last_index)
-
-    updated_message = %{last_message | content: last_message.content <> chunk}
-
-    updated_messages = List.replace_at(messages, last_index, updated_message)
+    [head | rest] = Enum.reverse(socket.assigns.messages)
+    updated_message = %{head | content: head.content <> chunk}
+    updated_messages = Enum.reverse([updated_message | rest])
 
     {:noreply, assign(socket, :messages, updated_messages)}
   end

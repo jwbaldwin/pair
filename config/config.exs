@@ -13,8 +13,9 @@ config :pair, Oban,
   queues: [default: 10],
   repo: Pair.Repo
 
-config :pair, :anthropic_api_key, System.get_env("ANTHROPIC_API_KEY")
-config :pair, :openai_api_key, System.get_env("OPENAI_API_KEY")
+config :pair,
+  anthropic_api_key: System.get_env("ANTHROPIC_API_KEY"),
+  openai_api_key: System.get_env("OPENAI_API_KEY")
 
 config :pair,
   ecto_repos: [Pair.Repo],
