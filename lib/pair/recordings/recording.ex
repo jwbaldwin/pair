@@ -9,7 +9,7 @@ defmodule Pair.Recordings.Recording do
   schema "recordings" do
     field :upload_url, :string
     field :transcription, :string
-    field :actions, :binary
+    field :actions, :string
 
     timestamps(type: :utc_datetime)
   end
