@@ -41,7 +41,7 @@ defmodule PairWeb.RecordingsLive do
           <ul class="divide-y divide-gray-200">
             <%= for recording <- @recordings do %>
               <li
-                class={"py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 #{if @selected_recording && @selected_recording.id == recording.id, do: "bg-blue-50", else: ""}"}
+                class={"py-3 flex items-center justify-between cursor-pointer rounded-lg hover:bg-gray-100 #{if @selected_recording && @selected_recording.id == recording.id, do: "bg-gray-50", else: ""}"}
                 phx-click="select-recording"
                 phx-value-id={recording.id}
               >
@@ -122,7 +122,6 @@ defmodule PairWeb.RecordingsLive do
   defp format_date(datetime) do
     datetime
     # For now, just hard-code to EST
-    |> DateTime.shift_zone!("America/New_York")
     |> Calendar.strftime("%B %d, %Y at %I:%M %p")
   end
 

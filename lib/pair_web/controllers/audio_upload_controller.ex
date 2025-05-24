@@ -15,6 +15,7 @@ defmodule PairWeb.AudioUploadController do
     # / create temp route for viewing recordings and their info
     # - Once a recording is done, we should do something - notify?
     #   if we have a sidebar we should update it and tag it nicely as new
+    # - update swift app to post to this endpoint
     with {:ok, recording} <- SaveRecording.call(file) do
       conn
       |> put_status(:created)
