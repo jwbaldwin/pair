@@ -35,11 +35,17 @@ defmodule PairWeb.RecordingsLive do
   end
 
   @impl true
-  def handle_info({:recording_updated, %{recording_id: _id}}, socket) do
+  def handle_info({:recording_updated, %{recording_id: id}}, socket) do
     recordings = Recordings.list_recordings()
 
-    {:noreply,
-     assign(socket, recordings: recordings, selected_recording: socket.assigns.selected_recording)}
+    selected_recording =
+      if socket.assigns.selected_recording && socket.assigns.selected_recording.id == id do
+        Recordings.get_recording!(id)
+      else
+        nil
+      end
+
+    {:noreply, assign(socket, recordings: recordings, selected_recording: selected_recording)}
   end
 
   @impl true
