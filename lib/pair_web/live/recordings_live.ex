@@ -39,10 +39,9 @@ defmodule PairWeb.RecordingsLive do
     recordings = Recordings.list_recordings()
 
     selected_recording =
-      if socket.assigns.selected_recording && socket.assigns.selected_recording.id == id do
-        Recordings.get_recording!(id)
-      else
-        nil
+      case socket.assigns.selected_recording do
+        %{id: ^id} -> Recordings.get_recording!(id)
+        recording -> recording
       end
 
     {:noreply, assign(socket, recordings: recordings, selected_recording: selected_recording)}
