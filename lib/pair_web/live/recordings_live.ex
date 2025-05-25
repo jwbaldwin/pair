@@ -2,9 +2,14 @@ defmodule PairWeb.RecordingsLive do
   use PairWeb, :live_view
 
   alias Pair.Recordings
+  alias Phoenix.PubSub
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      PubSub.subscribe(Pair.PubSub, "recordings:updates")
+    end
+
     {:ok,
      assign(socket,
        recordings: Recordings.list_recordings(),
@@ -27,6 +32,14 @@ defmodule PairWeb.RecordingsLive do
   @impl true
   def handle_event("hide-full-transcript", _, socket) do
     {:noreply, assign(socket, show_full_transcript: false)}
+  end
+
+  @impl true
+  def handle_info({:recording_updated, %{recording_id: _id}}, socket) do
+    recordings = Recordings.list_recordings()
+
+    {:noreply,
+     assign(socket, recordings: recordings, selected_recording: socket.assigns.selected_recording)}
   end
 
   @impl true

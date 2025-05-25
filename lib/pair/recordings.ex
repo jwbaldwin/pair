@@ -7,6 +7,7 @@ defmodule Pair.Recordings do
   alias Pair.Repo
 
   alias Pair.Recordings.Recording
+  alias Phoenix.PubSub
 
   @doc """
   Returns the list of recordings.
@@ -74,6 +75,15 @@ defmodule Pair.Recordings do
     %Recording{}
     |> Recording.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, recording} ->
+        broadcast_recording_updated!(recording)
+
+        {:ok, recording}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -92,6 +102,14 @@ defmodule Pair.Recordings do
     recording
     |> Recording.changeset(attrs)
     |> Repo.update()
+    |> case do
+      {:ok, updated_recording} ->
+        broadcast_recording_updated!(updated_recording)
+        {:ok, updated_recording}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -121,5 +139,13 @@ defmodule Pair.Recordings do
   """
   def change_recording(%Recording{} = recording, attrs \\ %{}) do
     Recording.changeset(recording, attrs)
+  end
+
+  def broadcast_recording_updated!(recording) do
+    PubSub.broadcast!(
+      Pair.PubSub,
+      "recordings:updates",
+      {:recording_updated, %{recording_id: recording.id}}
+    )
   end
 end

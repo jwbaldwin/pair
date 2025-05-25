@@ -11,13 +11,15 @@ defmodule Pair.Recordings.Recording do
     field :transcription, :string
     field :actions, :string
 
+    field :status, Ecto.Enum, values: [:uploaded, :transcribed, :analyzed, :error, :completed]
+
     timestamps(type: :utc_datetime)
   end
 
   @doc false
   def changeset(recording, attrs) do
     recording
-    |> cast(attrs, [:upload_url, :transcription, :actions])
+    |> cast(attrs, [:upload_url, :transcription, :actions, :status])
     |> validate_required([:upload_url])
   end
 end

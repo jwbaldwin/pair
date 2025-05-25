@@ -16,7 +16,7 @@ defmodule Pair.Recordings.Workers.ActionsWorker do
 
     with {:ok, recording} <- Recordings.fetch_recording(id),
          {:ok, actions} <- Anthropic.generate_actions(recording.transcription) do
-      Recordings.update_recording(recording, %{actions: actions})
+      Recordings.update_recording(recording, %{actions: actions, status: :analyzed})
     end
   end
 
