@@ -13,7 +13,7 @@ defmodule Pair.Recordings.Services.SaveRecording do
     :ok = File.cp!(recording.path, "uploads/#{filename}")
 
     with {:ok, recording} <- Recordings.create_recording(%{upload_url: "uploads/#{filename}"}),
-         :ok <- TranscriptionWorker.enqueue(recording) do
+         {:ok, _job} <- TranscriptionWorker.enqueue(recording) do
       {:ok, recording}
     end
   end

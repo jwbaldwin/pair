@@ -13,9 +13,13 @@ defmodule PairWeb.AudioUploadController do
     # / take text and send to LLM with prompt
     # / store response in db
     # / create temp route for viewing recordings and their info
+    # / update swift app to post to this endpoint
+    # / record input and output
+    # - we should enable channels so that as the workers complete they broadcast and update the UI
+    # - when a new item is added to the UI it should have special styling
+    # we should consolidate recordings and chat, not sure how
+
     # - Once a recording is done, we should do something - notify?
-    #   if we have a sidebar we should update it and tag it nicely as new
-    # - update swift app to post to this endpoint
     with {:ok, recording} <- SaveRecording.call(file) do
       conn
       |> put_status(:created)
