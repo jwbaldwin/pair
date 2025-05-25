@@ -62,6 +62,9 @@ defmodule PairWeb.RecordingsLive do
                   <div class="ml-3">
                     <p class="text-sm font-medium">{extract_filename(recording.upload_url)}</p>
                     <p class="text-xs text-gray-500">{format_date(recording.inserted_at)}</p>
+                    <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{status_color(recording.status)}"}>
+                      {recording.status}
+                    </span>
                   </div>
                 </div>
               </li>
@@ -156,4 +159,10 @@ defmodule PairWeb.RecordingsLive do
   rescue
     _ -> "Unable to format actions"
   end
+
+  defp status_color(:uploaded), do: "bg-gray-100 text-gray-800"
+  defp status_color(:transcribed), do: "bg-blue-100 text-blue-800"
+  defp status_color(:analyzed), do: "bg-emerald-100 text-emerald-800"
+  defp status_color(:error), do: "bg-red-100 text-red-800"
+  defp status_color(:completed), do: "bg-green-100 text-green-800"
 end

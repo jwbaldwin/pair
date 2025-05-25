@@ -18,7 +18,11 @@ defmodule Pair.Recordings.Workers.TranscriptionWorker do
 
     with {:ok, transcription} <- OpenAI.transcribe(upload_url),
          {:ok, recording} <- Recordings.fetch_recording(id),
-         {:ok, _} <- Recordings.update_recording(recording, %{transcription: transcription, status: :transcribed}) do
+         {:ok, _} <-
+           Recordings.update_recording(recording, %{
+             transcription: transcription,
+             status: :transcribed
+           }) do
       ActionsWorker.enqueue(recording)
     end
   end
