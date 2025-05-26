@@ -22,6 +22,11 @@ defmodule Pair.Recordings do
     Repo.all(Recording)
   end
 
+  def list_recordings_by_date do
+    list_recordings()
+    |> Enum.group_by(& &1.inserted_at)
+  end
+
   @doc """
   Gets a single recording.
 

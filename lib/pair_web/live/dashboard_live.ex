@@ -1,115 +1,75 @@
 defmodule PairWeb.DashboardLive do
   use PairWeb, :live_view
 
-  alias Pair.Clients.Anthropic
+  import PairWeb.Helpers
+
+  alias Pair.Recordings
+  alias Phoenix.PubSub
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      PubSub.subscribe(Pair.PubSub, "recordings:updates")
+    end
+
     {:ok,
      assign(socket,
-       messages: [],
-       form: to_form(%{"message" => ""})
+       recordings: Recordings.list_recordings_by_date()
      )}
   end
 
-  def handle_event("change", %{"message" => message}, socket) do
-    {:noreply, assign(socket, form: to_form(%{"message" => message}))}
-  end
-
   @impl true
-  def handle_event("send", %{"message" => message}, socket) when message != "" do
-    messages = socket.assigns.messages ++ [%{role: :user, content: message}]
-
-    Task.start(fn ->
-      Anthropic.stream_response(self(), messages)
-    end)
-
-    {:noreply,
-     socket
-     |> assign(:messages, messages)
-     |> assign(:form, to_form(%{"message" => ""}))}
-  end
-
-  def handle_event("send", _, socket), do: {:noreply, socket}
-
-  @impl true
-  def handle_info({:stream_chunk, chunk}, socket) do
-    [head | rest] = Enum.reverse(socket.assigns.messages)
-    updated_message = %{head | content: head.content <> chunk}
-    updated_messages = Enum.reverse([updated_message | rest])
-
-    {:noreply, assign(socket, :messages, updated_messages)}
-  end
-
-  @impl true
-  def handle_info({:stream_start}, socket) do
-    {:noreply,
-     assign(socket, :messages, socket.assigns.messages ++ [%{role: :assistant, content: ""}])}
-  end
-
-  @impl true
-  def handle_info({:stream_complete}, socket) do
-    {:noreply, socket}
+  def handle_info({:recording_updated, _}, socket) do
+    {:noreply, assign(socket, recordings: Recordings.list_recordings_by_date())}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-background">
-      <div class="flex-1 overflow-y-auto px-4 py-4">
+    <div class="flex flex-col h-screen bg-white">
+      <div class="flex-1 overflow-y-auto px-4 py-12">
         <div class="max-w-3xl mx-auto space-y-4">
-          <%= for message <- @messages do %>
-            <%= if message.role == :assistant do %>
-              <div class="flex gap-3 items-start">
-                <div class="flex-shrink-0 mt-0.5">
-                  <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                    <span class="text-primary-foreground text-xs font-medium">A</span>
-                  </div>
-                </div>
-                <div class="flex">
-                  <div class="bg-card rounded-lg px-4 py-3 shadow-sm border">
-                    <p class="text-card-foreground text-sm">{message.content}</p>
-                  </div>
-                </div>
-              </div>
-            <% else %>
-              <div class="flex gap-3 items-start">
-                <div class="flex">
-                  <div class="bg-muted rounded-lg px-4 py-3 ml-auto">
-                    <p class="text-foreground text-sm">{message.content}</p>
-                  </div>
-                </div>
-                <div class="flex-shrink-0 mt-0.5">
-                  <div class="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
-                    <span class="text-secondary-foreground text-xs font-medium">Y</span>
-                  </div>
-                </div>
+          <div class="w-full rounded-lg">
+            <%= for {date_group, recordings} <- @recordings do %>
+              <!-- Date Header -->
+              <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                  {format_date_header(date_group)}
+                </h3>
+                <%= for recording <- recordings do %>
+                  <.link
+                    class="py-3 px-3 flex items-center cursor-pointer rounded-lg hover:bg-gray-50 transition-colors duration-150"
+                    navigate={~p"/record/#{recording.id}"}
+                  >
+                    <!-- File Icon -->
+                    <div class="flex-shrink-0 mr-3">
+                      <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate">
+                        {extract_filename(recording.upload_url)}
+                      </p>
+                      <p class="text-xs text-gray-500 mt-0.5">
+                        {format_time(recording.inserted_at)}
+                      </p>
+                    </div>
+                    <!-- Status Badge (if needed) -->
+                    <%= if recording.status != "completed" do %>
+                      <div class="flex-shrink-0 ml-2 text-sm font-medium text-gray-500">
+                        <span class="inline-flex items-center h-2 w-2 rounded-full text-xs font-medium bg-yellow-500" />
+                        {String.capitalize(Atom.to_string(recording.status))}
+                      </div>
+                    <% end %>
+                  </.link>
+                <% end %>
               </div>
             <% end %>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="border-t bg-background">
-        <div class="max-w-3xl mx-auto px-4 py-4">
-          <.form for={@form} phx-submit="send" phx-change="change" class="flex gap-2 items-center">
-            <div class="flex-1 relative">
-              <.input
-                field={@form[:message]}
-                phx-debounce="200"
-                type="text"
-                autocomplete="off"
-                placeholder="Message..."
-                class="w-full px-3 py-2 h-10 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </div>
-            <button
-              type="submit"
-              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4"
-            >
-              Send
-            </button>
-          </.form>
+          </div>
         </div>
       </div>
     </div>

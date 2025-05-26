@@ -34,6 +34,7 @@ defmodule Pair.MixProject do
     [
       {:phoenix, "~> 1.7.20"},
       {:phoenix_ecto, "~> 4.5"},
+      {:tz, "~> 0.28"},
       {:ecto_sql, "~> 3.10"},
       {:uuid_v7, "~> 0.6.0"},
       {:postgrex, ">= 0.0.0"},

@@ -1,27 +1,24 @@
 defmodule PairWeb.RecordingsLive do
   use PairWeb, :live_view
 
+  import PairWeb.Helpers
+
   alias Pair.Recordings
   alias Phoenix.PubSub
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(%{"id" => id}, _session, socket) do
+    recording = Recordings.get_recording!(id)
+
     if connected?(socket) do
       PubSub.subscribe(Pair.PubSub, "recordings:updates")
     end
 
     {:ok,
      assign(socket,
-       recordings: Recordings.list_recordings(),
-       selected_recording: nil,
+       recording: recording,
        show_full_transcript: false
      )}
-  end
-
-  @impl true
-  def handle_event("select-recording", %{"id" => id}, socket) do
-    recording = Recordings.get_recording!(id)
-    {:noreply, assign(socket, selected_recording: recording, show_full_transcript: false)}
   end
 
   @impl true
@@ -36,127 +33,241 @@ defmodule PairWeb.RecordingsLive do
 
   @impl true
   def handle_info({:recording_updated, %{recording_id: id}}, socket) do
-    recordings = Recordings.list_recordings()
-
-    selected_recording =
-      case socket.assigns.selected_recording do
-        %{id: ^id} -> Recordings.get_recording!(id)
-        recording -> recording
-      end
-
-    {:noreply, assign(socket, recordings: recordings, selected_recording: selected_recording)}
+    if socket.assigns.recording.id == id do
+      recording = Recordings.get_recording!(id)
+      {:noreply, assign(socket, recording: recording)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-background p-6">
-      <h1 class="text-2xl font-bold mb-6">Recordings</h1>
-
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="md:col-span-1 bg-white rounded-lg shadow p-4">
-          <h2 class="text-xl font-semibold mb-4">Recording List</h2>
-          <ul class="divide-y divide-gray-200">
-            <%= for recording <- @recordings do %>
-              <li
-                class={"py-3 flex items-center justify-between cursor-pointer rounded-lg hover:bg-gray-100 #{if @selected_recording && @selected_recording.id == recording.id, do: "bg-gray-50", else: ""}"}
-                phx-click="select-recording"
-                phx-value-id={recording.id}
-              >
-                <div class="flex items-center">
-                  <div class="ml-3">
-                    <p class="text-sm font-medium">{extract_filename(recording.upload_url)}</p>
-                    <p class="text-xs text-gray-500">{format_date(recording.inserted_at)}</p>
-                    <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{status_color(recording.status)}"}>
-                      {recording.status}
-                    </span>
-                  </div>
+    <div class="max-w-6xl mx-auto space-y-4">
+      <div class="flex h-screen">
+        <!-- Main Content Area -->
+        <div class="flex-1 p-8 overflow-y-auto">
+          <!-- Header -->
+          <.link
+            navigate={~p"/"}
+            class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-4 w-4"
+            >
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+            Back
+          </.link>
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">
+              {Map.get(@recording, :title, "Meeting Notes")}
+            </h1>
+            
+    <!-- Meeting Info -->
+            <div class="flex items-center gap-6 text-sm text-gray-600">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                    clip-rule="evenodd"
+                  >
+                  </path>
+                </svg>
+                <span>{format_time(@recording.inserted_at)}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                  JB
                 </div>
-              </li>
-            <% end %>
-          </ul>
-        </div>
-
-        <div class="md:col-span-3 bg-white rounded-lg shadow p-4">
-          <%= if @selected_recording do %>
-            <h2 class="text-xl font-semibold mb-4">Recording Details</h2>
-            <div class="mb-6">
-              <h3 class="text-lg font-medium mb-2">Transcript</h3>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <%= if @selected_recording.transcription do %>
-                  <%= if @show_full_transcript do %>
-                    <p class="whitespace-pre-wrap">{@selected_recording.transcription}</p>
-                    <button
-                      class="text-blue-500 hover:text-blue-700 mt-2"
-                      phx-click="hide-full-transcript"
-                    >
-                      Show less
-                    </button>
-                  <% else %>
-                    <p class="whitespace-pre-wrap">
-                      {truncate_text(@selected_recording.transcription, 500)}
-                    </p>
-                    <%= if String.length(@selected_recording.transcription) > 500 do %>
-                      <button
-                        class="text-blue-500 hover:text-blue-700 mt-2"
-                        phx-click="show-full-transcript"
-                      >
-                        Show full transcript
-                      </button>
-                    <% end %>
-                  <% end %>
-                <% else %>
-                  <p class="text-gray-500 italic">No transcript available</p>
-                <% end %>
+                <span>Me</span>
               </div>
             </div>
-
+          </div>
+          
+    <!-- Content Sections -->
+          <div class="space-y-8">
+            <!-- Product Overview Section -->
             <div>
-              <h3 class="text-lg font-medium mb-2">Generated Actions</h3>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <%= if @selected_recording.actions do %>
-                  <pre class="whitespace-pre-wrap text-sm"><%= format_actions(@selected_recording.actions) %></pre>
-                <% else %>
-                  <p class="text-gray-500 italic">No actions available</p>
-                <% end %>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <span class="text-gray-400 mr-2">#</span> Product Overview
+              </h2>
+              <ul class="space-y-2 text-gray-700">
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Pair AI offers meeting note-taking functionality
+                </li>
+                <li class="flex items-start text-gray-500">
+                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Integrates with Google Calendar to show upcoming appointments
+                </li>
+                <li class="flex items-start text-gray-500">
+                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Automatically identifies and includes meeting participants
+                </li>
+              </ul>
+            </div>
+            
+    <!-- Key Features Section -->
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <span class="text-gray-400 mr-2">#</span> Key Features
+              </h2>
+              <ul class="space-y-2 text-gray-500">
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Internal microphone recording capability
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Automatic date/meeting participant detection
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Real-time transcription during meetings
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Shows live transcript while recording
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Ability to take rough notes alongside transcription
+                </li>
+              </ul>
+            </div>
+            
+    <!-- Integration Capabilities Section -->
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <span class="text-gray-400 mr-2">#</span> Integration Capabilities
+              </h2>
+              <ul class="space-y-2 text-gray-500">
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Google Calendar connection pulls in:
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+    <!-- Right Sidebar -->
+        <div class="w-80 bg-white border-l border-gray-200 p-6 space-y-8">
+          <!-- Share Notes Section -->
+          <div>
+            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
+              SHARE NOTES
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <button class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  >
+                  </path>
+                </svg>
+                Copy link
+              </button>
+              <button class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  >
+                  </path>
+                </svg>
+                Copy text
+              </button>
+              <button class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  >
+                  </path>
+                </svg>
+                Email
+              </button>
+              <button class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                <div class="w-4 h-4 bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 rounded">
+                </div>
+                Slack
+              </button>
+            </div>
+          </div>
+          
+    <!-- Ask Granola Section -->
+          <div>
+            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
+              ASK GRANOLA
+            </h3>
+            
+    <!-- User Question -->
+            <div class="mb-4">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                  JB
+                </div>
+                <div class="bg-gray-100 rounded-lg p-3 text-sm">
+                  What are the 3-4 next steps from the meeting above that I need to do?
+                </div>
               </div>
             </div>
-          <% else %>
-            <div class="flex items-center justify-center h-full">
-              <p class="text-gray-500">Select a recording to view details</p>
+            
+    <!-- AI Response -->
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                gi
+              </div>
+              <div class="bg-gray-100 rounded-lg p-3 text-sm space-y-2">
+                <p><strong>1. Evaluate Tool Finder placement potential for Pair AI.</strong></p>
+                <p><strong>2. Review the full feature set of Pair AI.</strong></p>
+                <p><strong>3. Make a decision on the coverage approach for Pair AI.</strong></p>
+              </div>
             </div>
-          <% end %>
+            
+    <!-- Input for new questions -->
+            <div class="mt-4">
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ask a question about this meeting..."
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">
+                  Ask
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
     """
   end
 
-  defp extract_filename(nil), do: "Unknown file"
+  def format_actions(nil), do: ""
 
-  defp extract_filename(url) do
-    url |> String.split("/") |> List.last()
-  end
-
-  defp format_date(nil), do: ""
-
-  defp format_date(datetime) do
-    datetime
-    # For now, just hard-code to EST
-    |> Calendar.strftime("%B %d, %Y at %I:%M %p")
-  end
-
-  defp truncate_text(nil, _), do: ""
-
-  defp truncate_text(text, max_length) when byte_size(text) > max_length do
-    String.slice(text, 0, max_length) <> "..."
-  end
-
-  defp truncate_text(text, _), do: text
-
-  defp format_actions(nil), do: ""
-
-  defp format_actions(actions) when is_binary(actions) do
+  def format_actions(actions) when is_binary(actions) do
     case Jason.decode(actions) do
       {:ok, decoded} -> Jason.encode!(decoded, pretty: true)
       _ -> actions
@@ -164,10 +275,4 @@ defmodule PairWeb.RecordingsLive do
   rescue
     _ -> "Unable to format actions"
   end
-
-  defp status_color(:uploaded), do: "bg-gray-100 text-gray-800"
-  defp status_color(:transcribed), do: "bg-blue-100 text-blue-800"
-  defp status_color(:analyzed), do: "bg-emerald-100 text-emerald-800"
-  defp status_color(:error), do: "bg-red-100 text-red-800"
-  defp status_color(:completed), do: "bg-green-100 text-green-800"
 end

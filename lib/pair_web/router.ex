@@ -18,7 +18,8 @@ defmodule PairWeb.Router do
     pipe_through :browser
 
     live "/", DashboardLive, :index
-    live "/recordings", RecordingsLive, :index
+    live "/record/:id", RecordingsLive, :index
+    live "/chat", ChatLive, :index
   end
 
   scope "/api", PairWeb do

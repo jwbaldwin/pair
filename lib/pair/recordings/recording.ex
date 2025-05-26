@@ -5,6 +5,7 @@ defmodule Pair.Recordings.Recording do
 
   @type t :: %__MODULE__{}
   @type id :: UUIDv7.t()
+  @type status :: :uploaded | :transcribed | :analyzed | :error | :completed
 
   schema "recordings" do
     field :upload_url, :string

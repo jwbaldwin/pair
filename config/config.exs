@@ -23,7 +23,7 @@ config :pair,
 
 # Configures the endpoint
 config :pair, PairWeb.Endpoint,
-  url: [host: "localhost"],
+  url: [host: "127.0.0.1"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: PairWeb.ErrorHTML, json: PairWeb.ErrorJSON],
@@ -36,6 +36,8 @@ config :pair, Pair.Repo,
   start_apps_before_migration: [:uuid_v7],
   migration_primary_key: [type: :binary_id],
   migration_foreign_key: [type: :binary_id]
+
+config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 
 # Configures the mailer
 #

@@ -15,7 +15,13 @@ defmodule PairWeb.AudioUploadController do
     # / create temp route for viewing recordings and their info
     # / update swift app to post to this endpoint
     # / record input and output
-    # - we should enable channels so that as the workers complete they broadcast and update the UI
+    # / we should enable channels so that as the workers complete they broadcast and update the UI
+    # / redo the ui to show recordings and show details
+    # / separate recording page with chat
+    # - update data to use actual datqa from recording
+    # - update system prompt
+    # - get title from AI and add to recording
+    # - wire up chat to recording page
     # - when a new item is added to the UI it should have special styling
     # we should consolidate recordings and chat, not sure how
 
