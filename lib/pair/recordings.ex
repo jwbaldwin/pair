@@ -153,4 +153,29 @@ defmodule Pair.Recordings do
       {:recording_updated, %{recording_id: recording.id}}
     )
   end
+
+  @doc """
+  Gets the structured meeting notes for a recording.
+
+  Returns `{:ok, meeting_notes}` if the recording has structured meeting notes,
+  `{:error, reason}` otherwise.
+
+  ## Examples
+
+      iex> fetch_meeting_notes(recording)
+      {:ok, %{meeting_metadata: %{...}, participants: [...], sections: [...]}}
+      
+      iex> fetch_meeting_notes(recording_without_notes)
+      {:error, :no_meeting_notes}
+  """
+  def fetch_meeting_notes(%Recording{meeting_notes: nil}), do: {:error, :no_meeting_notes}
+  def fetch_meeting_notes(%Recording{meeting_notes: ""}), do: {:error, :no_meeting_notes}
+
+  def fetch_meeting_notes(%Recording{meeting_notes: meeting_notes})
+      when is_binary(meeting_notes) do
+    case Jason.decode(meeting_notes) do
+      {:ok, decoded_notes} -> {:ok, decoded_notes}
+      {:error, _} -> {:error, :invalid_json}
+    end
+  end
 end

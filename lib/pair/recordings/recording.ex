@@ -5,14 +5,16 @@ defmodule Pair.Recordings.Recording do
 
   @type t :: %__MODULE__{}
   @type id :: UUIDv7.t()
-  @type status :: :uploaded | :transcribed | :analyzed | :error | :completed
+  @type status :: :uploaded | :transcribing | :analyzing | :structuring | :error | :completed
 
   schema "recordings" do
     field :upload_url, :string
     field :transcription, :string
     field :actions, :string
+    field :meeting_notes, :string
 
-    field :status, Ecto.Enum, values: [:uploaded, :transcribed, :analyzed, :error, :completed]
+    field :status, Ecto.Enum,
+      values: [:uploaded, :transcribing, :structuring, :analyzing, :error, :completed]
 
     timestamps(type: :utc_datetime)
   end
@@ -20,7 +22,7 @@ defmodule Pair.Recordings.Recording do
   @doc false
   def changeset(recording, attrs) do
     recording
-    |> cast(attrs, [:upload_url, :transcription, :actions, :status])
+    |> cast(attrs, [:upload_url, :transcription, :meeting_notes, :actions, :status])
     |> validate_required([:upload_url])
   end
 end

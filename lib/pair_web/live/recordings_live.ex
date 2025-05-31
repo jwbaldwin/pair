@@ -14,9 +14,17 @@ defmodule PairWeb.RecordingsLive do
       PubSub.subscribe(Pair.PubSub, "recordings:updates")
     end
 
+    # TODO: idk about this
+    meeting_notes =
+      case Recordings.fetch_meeting_notes(recording) do
+        {:ok, notes} -> notes
+        {:error, _} -> nil
+      end
+
     {:ok,
      assign(socket,
        recording: recording,
+       meeting_notes: meeting_notes,
        show_full_transcript: false
      )}
   end
@@ -35,7 +43,15 @@ defmodule PairWeb.RecordingsLive do
   def handle_info({:recording_updated, %{recording_id: id}}, socket) do
     if socket.assigns.recording.id == id do
       recording = Recordings.get_recording!(id)
-      {:noreply, assign(socket, recording: recording)}
+
+      # TODO: idk about this either
+      meeting_notes =
+        case Recordings.fetch_meeting_notes(recording) do
+          {:ok, notes} -> notes
+          {:error, _} -> nil
+        end
+
+      {:noreply, assign(socket, recording: recording, meeting_notes: meeting_notes)}
     else
       {:noreply, socket}
     end

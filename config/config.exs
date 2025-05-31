@@ -17,6 +17,12 @@ config :pair,
   anthropic_api_key: System.get_env("ANTHROPIC_API_KEY"),
   openai_api_key: System.get_env("OPENAI_API_KEY")
 
+config :instructor,
+  adapter: Instructor.Adapters.Anthropic,
+  anthropic: [
+    api_key: System.get_env("ANTHROPIC_API_KEY")
+  ]
+
 config :pair,
   ecto_repos: [Pair.Repo],
   generators: [timestamp_type: :utc_datetime]
