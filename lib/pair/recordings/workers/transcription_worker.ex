@@ -8,7 +8,8 @@ defmodule Pair.Recordings.Workers.TranscriptionWorker do
   alias Pair.Clients.OpenAI
   alias Pair.Recordings
   alias Pair.Recordings.Recording
-  alias Pair.Recordings.Workers.ActionsWorker
+  alias Pair.Recordings.Workers.InsightsWorker
+  alias Pair.Recordings.Workers.MeetingNotesWorker
 
   require Logger
 
@@ -23,7 +24,8 @@ defmodule Pair.Recordings.Workers.TranscriptionWorker do
              transcription: transcription,
              status: :transcribed
            }) do
-      ActionsWorker.enqueue(recording)
+      MeetingNotesWorker.enqueue(recording)
+      InsightsWorker.enqueue(recording)
     end
   end
 

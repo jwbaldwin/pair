@@ -13,42 +13,39 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
   def call(%Recording{transcription: transcript}) when is_binary(transcript) do
     Logger.info("Extracting structured meeting notes from transcript")
 
-    Instructor.chat_completion(
-      model: "claude-sonnet-4-20250514",
-      response_model: MeetingNotes,
-      max_retries: 3,
-      messages: [
-        %{
-          role: "system",
-          content: system_prompt()
-        },
-        %{
-          role: "user",
-          content: """
-          Extract structured meeting notes from this transcript:
+    with {:ok, notes} <-
+           Instructor.chat_completion(
+             model: "claude-sonnet-4-20250514",
+             response_model: MeetingNotes,
+             max_retries: 3,
+             messages: [
+               %{
+                 role: "system",
+                 content: system_prompt()
+               },
+               %{
+                 role: "user",
+                 content: """
+                 Extract structured meeting notes from this transcript:
 
-          <transcript>
-          #{transcript}
-          </transcript>
+                 <transcript>
+                 #{transcript}
+                 </transcript>
 
-          Please organize the insights into clear sections with relevant bullet points.
-          Focus on actionable information and key decisions.
-          """
-        }
-      ]
-    )
+                 Please organize the insights into clear sections with relevant bullet points.
+                 Focus on actionable information and key decisions.
+                 """
+               }
+             ]
+           ) do
+      {:ok, to_json(notes)}
+    end
   rescue
     error ->
       Logger.error("Error extracting meeting notes: #{inspect(error)}")
       {:error, "Failed to extract meeting notes: #{inspect(error)}"}
   end
 
-  def extract_meeting_notes(_), do: {:error, "Invalid transcript format"}
-
-  @doc """
-  Converts structured meeting notes to a JSON-serializable format.
-  """
-  @spec to_json(MeetingNotes.t()) :: map()
   def to_json(%MeetingNotes{} = meeting_notes) do
     %{
       meeting_metadata: format_meeting_metadata(meeting_notes.meeting_metadata),
