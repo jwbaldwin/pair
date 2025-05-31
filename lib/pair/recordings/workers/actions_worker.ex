@@ -8,7 +8,7 @@ defmodule Pair.Recordings.Workers.ActionsWorker do
   alias Pair.Recordings
   alias Pair.Recordings.Recording
   alias Pair.Clients.Anthropic
-  alias Pair.Recordings.Services.MeetingNotesExtractor
+  alias Pair.Recordings.Services.ExtractMeetingNotes
 
   require Logger
 
@@ -18,12 +18,10 @@ defmodule Pair.Recordings.Workers.ActionsWorker do
 
     with {:ok, recording} <- Recordings.fetch_recording(id),
          {:ok, actions} <- Anthropic.generate_actions(recording.transcription),
-         {:ok, structured_notes} <-
-           MeetingNotesExtractor.extract_meeting_notes(recording.transcription) do
-      # Convert structured notes to JSON for storage
+         {:ok, structured_notes} <- ExtractMeetingNotes.call(recording) do
       meeting_notes_json =
         structured_notes
-        |> MeetingNotesExtractor.to_json()
+        |> ExtractMeetingNotes.to_json()
         |> Jason.encode!()
 
       Recordings.update_recording(recording, %{
