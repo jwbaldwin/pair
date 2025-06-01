@@ -22,8 +22,6 @@ defmodule Pair.Prompts.MeetingNotes do
   @primary_key false
   embedded_schema do
     embeds_one :meeting_metadata, MeetingMetadata, primary_key: false do
-      field :timestamp, :string
-      field :duration_minutes, :integer
       field :meeting_type, :string
       field :primary_topic, :string
     end
@@ -31,7 +29,6 @@ defmodule Pair.Prompts.MeetingNotes do
     embeds_many :participants, Participant, primary_key: false do
       field :name, :string
       field :role, :string
-      field :initials, :string
     end
 
     embeds_many :sections, Section, primary_key: false do

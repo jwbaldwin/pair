@@ -25,6 +25,7 @@ defmodule Pair.DataCase do
       import Ecto.Query
       import Pair.DataCase
       import Pair.Factory
+      import ExUnit.CaptureLog
     end
   end
 

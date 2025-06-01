@@ -11,7 +11,6 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotesTest do
 
   describe "call/1" do
     test "successfully extracts meeting notes from transcript" do
-      # Mock the Instructor.chat_completion call
       expected_notes = %MeetingNotes{
         meeting_metadata: %{
           timestamp: "2024-05-31 17:30:00",
@@ -44,12 +43,10 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotesTest do
         assert opts[:max_retries] == 3
         assert length(opts[:messages]) == 2
 
-        # Verify system prompt is present
         system_message = Enum.find(opts[:messages], &(&1.role == "system"))
         assert system_message
         assert String.contains?(system_message.content, "expert meeting assistant")
 
-        # Verify user message contains transcript
         user_message = Enum.find(opts[:messages], &(&1.role == "user"))
         assert user_message
         assert String.contains?(user_message.content, "test transcript content")
@@ -62,7 +59,8 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotesTest do
         transcription: "test transcript content"
       }
 
-      assert {:ok, ^expected_notes} = ExtractMeetingNotes.call(recording)
+      string_expected_notes = Jason.encode!(ExtractMeetingNotes.to_json(expected_notes))
+      assert {:ok, ^string_expected_notes} = ExtractMeetingNotes.call(recording)
     end
 
     test "handles API errors gracefully" do
@@ -90,13 +88,18 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotesTest do
         transcription: "test transcript"
       }
 
-      assert {:error, error_msg} = ExtractMeetingNotes.call(recording)
-      assert String.contains?(error_msg, "Failed to extract meeting notes")
+      log =
+        capture_log(fn ->
+          assert {:error, error_msg} = ExtractMeetingNotes.call(recording)
+          assert String.contains?(error_msg, "Failed to extract meeting notes")
+        end)
+
+      assert log =~ "Error extracting meeting notes: %RuntimeError{message: \"Network timeout\"}"
     end
   end
 
   describe "to_json/1" do
-    test "converts MeetingNotes struct to JSON-serializable map" do
+    test "converts MeetingNotes struct to JSON-string" do
       meeting_notes = %MeetingNotes{
         meeting_metadata: %{
           timestamp: "2024-05-31 17:30:00",
@@ -126,14 +129,12 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotesTest do
 
       assert result == %{
                meeting_metadata: %{
-                 timestamp: "2024-05-31 17:30:00",
-                 duration_minutes: 45,
                  meeting_type: "Sales Call",
                  primary_topic: "SaaS Demo"
                },
                participants: [
-                 %{name: "Alice Cooper", role: "Sales Rep", initials: "AC"},
-                 %{name: "Bob Wilson", role: "Prospect", initials: "BW"}
+                 %{name: "Alice Cooper", role: "Sales Rep"},
+                 %{name: "Bob Wilson", role: "Prospect"}
                ],
                sections: [
                  %{

@@ -38,7 +38,10 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
                }
              ]
            ) do
-      {:ok, to_json(notes)}
+      notes
+      |> to_json()
+      |> Jason.encode!()
+      |> then(&{:ok, &1})
     end
   rescue
     error ->
@@ -46,11 +49,12 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
       {:error, "Failed to extract meeting notes: #{inspect(error)}"}
   end
 
+  @spec to_json(MeetingNotes.t()) :: map()
   def to_json(%MeetingNotes{} = meeting_notes) do
     %{
-      meeting_metadata: format_meeting_metadata(meeting_notes.meeting_metadata),
-      participants: format_participants(meeting_notes.participants),
-      sections: format_sections(meeting_notes.sections)
+      meeting_metadata: format_meeting_metadata(Map.get(meeting_notes, :meeting_metadata)),
+      participants: format_participants(Map.get(meeting_notes, :participants)),
+      sections: format_sections(Map.get(meeting_notes, :sections))
     }
   end
 
@@ -58,19 +62,16 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
 
   defp format_meeting_metadata(metadata) do
     %{
-      timestamp: metadata.timestamp,
-      duration_minutes: metadata.duration_minutes,
-      meeting_type: metadata.meeting_type,
-      primary_topic: metadata.primary_topic
+      meeting_type: Map.get(metadata, :meeting_type),
+      primary_topic: Map.get(metadata, :primary_topic)
     }
   end
 
   defp format_participants(participants) when is_list(participants) do
     Enum.map(participants, fn participant ->
       %{
-        name: participant.name,
-        role: participant.role,
-        initials: participant.initials
+        name: Map.get(participant, :name),
+        role: Map.get(participant, :role)
       }
     end)
   end
@@ -80,9 +81,9 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
   defp format_sections(sections) when is_list(sections) do
     Enum.map(sections, fn section ->
       %{
-        title: section.title,
-        type: section.type,
-        content: section.content || []
+        title: Map.get(section, :title),
+        type: Map.get(section, :type),
+        content: Map.get(section, :content, [])
       }
     end)
   end

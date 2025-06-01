@@ -16,11 +16,9 @@ defmodule Pair.Recordings.Workers.InsightsWorker do
     Logger.info("Generating insights for recording #{id}")
 
     with {:ok, recording} <- Recordings.fetch_recording(id),
-         {:ok, actions} <- Anthropic.generate_actions(recording.transcription) do
-      Recordings.update_recording(recording, %{
-        actions: actions,
-        status: :analyzed
-      })
+         {:ok, actions} <- Anthropic.generate_actions(recording.transcription),
+         {:ok, _} = Recordings.update_recording(recording, %{actions: actions, status: :analyzed}) do
+      :ok
     else
       {:error, reason} ->
         Logger.error("Failed to process recording #{id}: #{inspect(reason)}")

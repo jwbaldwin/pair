@@ -13,22 +13,25 @@ defmodule Pair.Clients.OpenAI do
         }
       )
 
-    file_content = File.read!(upload_url)
-    filename = Path.basename(upload_url)
+    with {:ok, file_content} <- File.read(upload_url) do
+      filename = Path.basename(upload_url)
 
-    resp =
-      Req.post!(
-        openai_api,
-        form_multipart: [
-          file: {file_content, filename: filename, content_type: "audio/wave"},
-          model: "gpt-4o-transcribe",
-          response_format: "text"
-        ]
-      )
+      resp =
+        Req.post!(
+          openai_api,
+          form_multipart: [
+            file: {file_content, filename: filename, content_type: "audio/wave"},
+            model: "gpt-4o-transcribe",
+            response_format: "text"
+          ]
+        )
 
-    case resp.status do
-      200 -> {:ok, resp.body}
-      _ -> {:error, "OpenAI API error: #{resp.status} - #{resp.body}"}
+      case resp.status do
+        200 -> {:ok, resp.body}
+        _ -> {:error, "OpenAI API error: #{resp.status} - #{resp.body}"}
+      end
+    else
+      {:error, :enoent} -> {:error, "Failed to read file: file not found at path #{upload_url}"}
     end
   end
 end

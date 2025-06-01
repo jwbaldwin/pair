@@ -8,24 +8,17 @@ defmodule PairWeb.RecordingsLive do
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
-    recording = Recordings.get_recording!(id)
+    {:ok, recording} = Recordings.fetch_recording_with_meeting_notes(id)
 
     if connected?(socket) do
       PubSub.subscribe(Pair.PubSub, "recordings:updates")
     end
 
-    # TODO: idk about this
-    meeting_notes =
-      case Recordings.fetch_meeting_notes(recording) do
-        {:ok, notes} -> notes
-        {:error, _} -> nil
-      end
-
     {:ok,
      assign(socket,
        recording: recording,
-       meeting_notes: meeting_notes,
-       show_full_transcript: false
+       show_full_transcript: false,
+       active_tab: "meeting_notes"
      )}
   end
 
@@ -40,18 +33,16 @@ defmodule PairWeb.RecordingsLive do
   end
 
   @impl true
+  def handle_event("switch_tab", %{"tab" => tab}, socket) do
+    {:noreply, assign(socket, active_tab: tab)}
+  end
+
+  @impl true
   def handle_info({:recording_updated, %{recording_id: id}}, socket) do
     if socket.assigns.recording.id == id do
-      recording = Recordings.get_recording!(id)
+      {:ok, recording} = Recordings.fetch_recording_with_meeting_notes(id)
 
-      # TODO: idk about this either
-      meeting_notes =
-        case Recordings.fetch_meeting_notes(recording) do
-          {:ok, notes} -> notes
-          {:error, _} -> nil
-        end
-
-      {:noreply, assign(socket, recording: recording, meeting_notes: meeting_notes)}
+      {:noreply, assign(socket, recording: recording)}
     else
       {:noreply, socket}
     end
@@ -87,11 +78,19 @@ defmodule PairWeb.RecordingsLive do
           </.link>
           <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900 mb-4">
-              {Map.get(@recording, :title, "Meeting Notes")}
+              {get_meeting_title(@recording)}
             </h1>
             
+    <!-- Meeting Metadata -->
+            <% metadata = Map.get(@recording.meeting_notes, "meeting_metadata") %>
+            <%= if metadata && Map.get(metadata, "meeting_type") do %>
+              <div class="mb-8 text-sm text-zinc-700">
+                <span class="bg-zinc-50 p-3 rounded-lg">{Map.get(metadata, "meeting_type")}</span>
+              </div>
+            <% end %>
+            
     <!-- Meeting Info -->
-            <div class="flex items-center gap-6 text-sm text-gray-600">
+            <div class="flex items-center gap-6 text-sm text-gray-600 mb-6">
               <div class="flex items-center gap-2">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path
@@ -104,78 +103,69 @@ defmodule PairWeb.RecordingsLive do
                 <span>{format_time(@recording.inserted_at)}</span>
               </div>
               <div class="flex items-center gap-2">
-                <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
-                  JB
-                </div>
-                <span>Me</span>
+                <!-- Participants Section -->
+                <%= if Map.get(@recording.meeting_notes, "participants") && length(Map.get(@recording.meeting_notes, "participants", [])) > 0 do %>
+                  <div class="flex flex-wrap gap-3">
+                    <%= for participant <- Map.get(@recording.meeting_notes, "participants", []) do %>
+                      <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                        <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                          {get_initials(Map.get(participant, "name", ""))}
+                        </div>
+                        <div>
+                          <div class="text-sm font-medium text-gray-900">
+                            {Map.get(participant, "name", "Client")}
+                            <%= if Map.get(participant, "role") do %>
+                              <span class="text-xs text-gray-500">
+                                - {Map.get(participant, "role")}
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
               </div>
+            </div>
+            
+    <!-- Tab Toggle -->
+            <div class="flex bg-gray-100 rounded-lg p-1 mb-8 w-fit">
+              <button
+                phx-click="switch_tab"
+                phx-value-tab="meeting_notes"
+                class={[
+                  "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                  if(@active_tab == "meeting_notes",
+                    do: "bg-white text-gray-900 shadow-sm",
+                    else: "text-gray-600 hover:text-gray-900"
+                  )
+                ]}
+              >
+                Meeting Notes
+              </button>
+              <button
+                phx-click="switch_tab"
+                phx-value-tab="insights"
+                class={[
+                  "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                  if(@active_tab == "insights",
+                    do: "bg-white text-gray-900 shadow-sm",
+                    else: "text-gray-600 hover:text-gray-900"
+                  )
+                ]}
+              >
+                Insights
+              </button>
             </div>
           </div>
           
-    <!-- Content Sections -->
+    <!-- Content based on active tab -->
           <div class="space-y-8">
-            <!-- Product Overview Section -->
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="text-gray-400 mr-2">#</span> Product Overview
-              </h2>
-              <ul class="space-y-2 text-gray-700">
-                <li class="flex items-start">
-                  <span class="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Pair AI offers meeting note-taking functionality
-                </li>
-                <li class="flex items-start text-gray-500">
-                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Integrates with Google Calendar to show upcoming appointments
-                </li>
-                <li class="flex items-start text-gray-500">
-                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Automatically identifies and includes meeting participants
-                </li>
-              </ul>
-            </div>
-            
-    <!-- Key Features Section -->
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="text-gray-400 mr-2">#</span> Key Features
-              </h2>
-              <ul class="space-y-2 text-gray-500">
-                <li class="flex items-start">
-                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Internal microphone recording capability
-                </li>
-                <li class="flex items-start">
-                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Automatic date/meeting participant detection
-                </li>
-                <li class="flex items-start">
-                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Real-time transcription during meetings
-                </li>
-                <li class="flex items-start">
-                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Shows live transcript while recording
-                </li>
-                <li class="flex items-start">
-                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Ability to take rough notes alongside transcription
-                </li>
-              </ul>
-            </div>
-            
-    <!-- Integration Capabilities Section -->
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="text-gray-400 mr-2">#</span> Integration Capabilities
-              </h2>
-              <ul class="space-y-2 text-gray-500">
-                <li class="flex items-start">
-                  <span class="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Google Calendar connection pulls in:
-                </li>
-              </ul>
-            </div>
+            <%= if @active_tab == "meeting_notes" do %>
+              <.render_meeting_notes meeting_notes={@recording.meeting_notes} />
+            <% else %>
+              <.render_insights actions={@recording.actions} />
+            <% end %>
           </div>
         </div>
         
@@ -231,10 +221,10 @@ defmodule PairWeb.RecordingsLive do
             </div>
           </div>
           
-    <!-- Ask Granola Section -->
+    <!-- Ask pAIr Section -->
           <div>
             <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-              ASK GRANOLA
+              ASK pAIr
             </h3>
             
     <!-- User Question -->
@@ -279,6 +269,188 @@ defmodule PairWeb.RecordingsLive do
       </div>
     </div>
     """
+  end
+
+  # Component for rendering meeting notes
+  defp render_meeting_notes(assigns) do
+    ~H"""
+    <%= if @meeting_notes && @meeting_notes != %{} do %>
+      <!-- Content Sections -->
+      <%= if Map.get(@meeting_notes, "sections") do %>
+        <%= for section <- Map.get(@meeting_notes, "sections", []) do %>
+          <div class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <span class="text-gray-400 mr-2">#</span>
+              {Map.get(section, "title", "Untitled Section")}
+              <%= if Map.get(section, "type") do %>
+                <span class="ml-2 px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md uppercase">
+                  {format_section_type(Map.get(section, "type"))}
+                </span>
+              <% end %>
+            </h2>
+            <%= if Map.get(section, "content") && length(Map.get(section, "content", [])) > 0 do %>
+              <ul class="space-y-2">
+                <%= for {item, index} <- Enum.with_index(Map.get(section, "content", [])) do %>
+                  <li class="flex items-start">
+                    <span class={[
+                      "w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0",
+                      get_bullet_color(Map.get(section, "type"), index)
+                    ]}>
+                    </span>
+                    <span class="text-gray-700">{item}</span>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="text-gray-500 italic">No content available for this section.</p>
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="text-center py-12">
+          <div class="text-gray-400 mb-4">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              >
+              </path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No meeting notes available</h3>
+          <p class="text-gray-500">
+            Meeting notes are still being processed or haven't been generated yet.
+          </p>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-12">
+        <div class="text-gray-400 mb-4">
+          <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            >
+            </path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No meeting notes available</h3>
+        <p class="text-gray-500">
+          Meeting notes are still being processed or haven't been generated yet.
+        </p>
+      </div>
+    <% end %>
+    """
+  end
+
+  # Component for rendering insights (legacy actions)
+  defp render_insights(assigns) do
+    ~H"""
+    <%= if @actions && @actions != "" do %>
+      <div class="bg-gray-50 rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+          <span class="text-gray-400 mr-2">#</span> AI Insights
+        </h2>
+        <div class="bg-white rounded-lg p-4 border">
+          <pre class="text-sm text-gray-700 whitespace-pre-wrap font-mono">{format_actions(@actions)}</pre>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-12">
+        <div class="text-gray-400 mb-4">
+          <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            >
+            </path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No insights available</h3>
+        <p class="text-gray-500">
+          AI insights are still being processed or haven't been generated yet.
+        </p>
+      </div>
+    <% end %>
+    """
+  end
+
+  # Helper functions
+  defp get_meeting_title(recording) do
+    case recording.meeting_notes do
+      %{"meeting_metadata" => %{"primary_topic" => topic}} when topic != nil and topic != "" ->
+        topic
+
+      _ ->
+        "Meeting Notes"
+    end
+  end
+
+  defp get_main_participant(recording) do
+    case recording.meeting_notes do
+      %{"participants" => [participant | _]} ->
+        Map.get(participant, "name", "Me")
+
+      _ ->
+        "Me"
+    end
+  end
+
+  defp get_participant_initials(recording) do
+    case recording.meeting_notes do
+      %{"participants" => [participant | _]} ->
+        get_initials(Map.get(participant, "name", "Me"))
+
+      _ ->
+        "Unk"
+    end
+  end
+
+  defp get_initials(name) when is_binary(name) do
+    name
+    |> String.split()
+    |> Enum.take(2)
+    |> Enum.map(&String.first/1)
+    |> Enum.join()
+    |> String.upcase()
+  end
+
+  defp get_initials(_), do: "?"
+
+  defp format_section_type(type) when is_binary(type), do: String.replace(type, "_", " ")
+  defp format_section_type(_), do: ""
+
+  defp get_bullet_color(section_type, index) do
+    case section_type do
+      "action_items" ->
+        "bg-red-400"
+
+      "decisions" ->
+        "bg-green-400"
+
+      "key_points" ->
+        "bg-blue-400"
+
+      "next_steps" ->
+        "bg-purple-400"
+
+      "overview" ->
+        "bg-gray-400"
+
+      _ ->
+        # Alternate colors for other types
+        case rem(index, 3) do
+          0 -> "bg-gray-400"
+          1 -> "bg-gray-300"
+          2 -> "bg-gray-200"
+        end
+    end
   end
 
   def format_actions(nil), do: ""

@@ -23,9 +23,10 @@ defmodule Pair.Recordings.Workers.TranscriptionWorker do
            Recordings.update_recording(recording, %{
              transcription: transcription,
              status: :transcribed
-           }) do
-      MeetingNotesWorker.enqueue(recording)
-      InsightsWorker.enqueue(recording)
+           }),
+         {:ok, _} <- MeetingNotesWorker.enqueue(recording),
+         {:ok, _} <- InsightsWorker.enqueue(recording) do
+      :ok
     end
   end
 

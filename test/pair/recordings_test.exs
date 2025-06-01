@@ -21,7 +21,11 @@ defmodule Pair.RecordingsTest do
     end
 
     test "create_recording/1 with valid data creates a recording" do
-      valid_attrs = %{upload_url: "some upload_url", transcription: "some transcription", actions: "some actions"}
+      valid_attrs = %{
+        upload_url: "some upload_url",
+        transcription: "some transcription",
+        actions: "some actions"
+      }
 
       assert {:ok, %Recording{} = recording} = Recordings.create_recording(valid_attrs)
       assert recording.upload_url == "some upload_url"
@@ -35,9 +39,16 @@ defmodule Pair.RecordingsTest do
 
     test "update_recording/2 with valid data updates the recording" do
       recording = recording_fixture()
-      update_attrs = %{upload_url: "some updated upload_url", transcription: "some updated transcription", actions: "some updated actions"}
 
-      assert {:ok, %Recording{} = recording} = Recordings.update_recording(recording, update_attrs)
+      update_attrs = %{
+        upload_url: "some updated upload_url",
+        transcription: "some updated transcription",
+        actions: "some updated actions"
+      }
+
+      assert {:ok, %Recording{} = recording} =
+               Recordings.update_recording(recording, update_attrs)
+
       assert recording.upload_url == "some updated upload_url"
       assert recording.transcription == "some updated transcription"
       assert recording.actions == "some updated actions"

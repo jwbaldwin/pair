@@ -17,10 +17,13 @@ defmodule Pair.Recordings.Workers.MeetingNotesWorker do
 
     with {:ok, recording} <- Recordings.fetch_recording(id),
          {:ok, meeting_notes} <- ExtractMeetingNotes.call(recording) do
-      Recordings.update_recording(recording, %{
-        meeting_notes: meeting_notes,
-        status: :structured
-      })
+      {:ok, _} =
+        Recordings.update_recording(recording, %{
+          meeting_notes: meeting_notes,
+          status: :structured
+        })
+
+      :ok
     else
       {:error, reason} ->
         Logger.error("Failed to process recording #{id}: #{inspect(reason)}")

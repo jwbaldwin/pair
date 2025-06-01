@@ -23,8 +23,23 @@ defmodule Pair.Recordings do
   end
 
   def list_recordings_by_date do
-    list_recordings()
-    |> Enum.group_by(& &1.inserted_at)
+    recordings =
+      from(r in Recording, order_by: [desc: r.inserted_at])
+      |> Repo.all()
+
+    recordings
+    |> Enum.reduce([], fn rec, acc ->
+      date = DateTime.to_date(rec.inserted_at)
+
+      case acc do
+        [{^date, todays} | rest] ->
+          [{date, [rec | todays]} | rest]
+
+        _ ->
+          [{date, [rec]} | acc]
+      end
+    end)
+    |> Enum.reverse()
   end
 
   @doc """
@@ -61,6 +76,18 @@ defmodule Pair.Recordings do
     case Repo.get(Recording, id) do
       nil -> {:error, :not_found}
       recording -> {:ok, recording}
+    end
+  end
+
+  @doc """
+  Gets a single recording with its meeting notes already encoded as JSON
+  """
+  @spec fetch_recording_with_meeting_notes(Recording.id()) ::
+          {:ok, Recording.t()} | {:error, any()}
+  def fetch_recording_with_meeting_notes(id) do
+    with {:ok, recording} <- fetch_recording(id) do
+      notes = recording.meeting_notes || "{}"
+      {:ok, recording |> Map.put(:meeting_notes, Jason.decode!(notes))}
     end
   end
 
@@ -152,30 +179,5 @@ defmodule Pair.Recordings do
       "recordings:updates",
       {:recording_updated, %{recording_id: recording.id}}
     )
-  end
-
-  @doc """
-  Gets the structured meeting notes for a recording.
-
-  Returns `{:ok, meeting_notes}` if the recording has structured meeting notes,
-  `{:error, reason}` otherwise.
-
-  ## Examples
-
-      iex> fetch_meeting_notes(recording)
-      {:ok, %{meeting_metadata: %{...}, participants: [...], sections: [...]}}
-      
-      iex> fetch_meeting_notes(recording_without_notes)
-      {:error, :no_meeting_notes}
-  """
-  def fetch_meeting_notes(%Recording{meeting_notes: nil}), do: {:error, :no_meeting_notes}
-  def fetch_meeting_notes(%Recording{meeting_notes: ""}), do: {:error, :no_meeting_notes}
-
-  def fetch_meeting_notes(%Recording{meeting_notes: meeting_notes})
-      when is_binary(meeting_notes) do
-    case Jason.decode(meeting_notes) do
-      {:ok, decoded_notes} -> {:ok, decoded_notes}
-      {:error, _} -> {:error, :invalid_json}
-    end
   end
 end
