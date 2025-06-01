@@ -129,29 +129,31 @@ defmodule PairWeb.RecordingsLive do
             </div>
             
     <!-- Tab Toggle -->
-            <div class="flex bg-gray-100 rounded-lg p-1 mb-8 w-fit">
+            <div class="relative flex bg-gray-100 rounded-lg p-1 mb-8 w-fit inset-shadow">
+              <!-- sliding background -->
+              <div class={[
+                "absolute inset-1 w-[calc(50%-0.25rem)] bg-white rounded-md shadow transition-transform duration-300 ease-out",
+                @active_tab == "insights" && "translate-x-full"
+              ]} />
               <button
                 phx-click="switch_tab"
                 phx-value-tab="meeting_notes"
                 class={[
-                  "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
-                  if(@active_tab == "meeting_notes",
-                    do: "bg-white text-gray-900 shadow-sm",
-                    else: "text-gray-600 hover:text-gray-900"
-                  )
+                  "relative z-10 px-3 py-1.5 basis-1/2 text-sm font-medium rounded-md shrink-0",
+                  @active_tab == "meeting_notes" && "text-gray-900",
+                  @active_tab != "meeting_notes" && "text-gray-600 hover:text-gray-900"
                 ]}
               >
-                Meeting Notes
+                Notes
               </button>
+
               <button
                 phx-click="switch_tab"
                 phx-value-tab="insights"
                 class={[
-                  "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
-                  if(@active_tab == "insights",
-                    do: "bg-white text-gray-900 shadow-sm",
-                    else: "text-gray-600 hover:text-gray-900"
-                  )
+                  "relative z-10 px-3 py-1.5 basis-1/2 text-sm font-medium rounded-md shirnk-0",
+                  @active_tab == "insights" && "text-gray-900",
+                  @active_tab != "insights" && "text-gray-600 hover:text-gray-900"
                 ]}
               >
                 Insights
@@ -389,26 +391,6 @@ defmodule PairWeb.RecordingsLive do
 
       _ ->
         "Meeting Notes"
-    end
-  end
-
-  defp get_main_participant(recording) do
-    case recording.meeting_notes do
-      %{"participants" => [participant | _]} ->
-        Map.get(participant, "name", "Me")
-
-      _ ->
-        "Me"
-    end
-  end
-
-  defp get_participant_initials(recording) do
-    case recording.meeting_notes do
-      %{"participants" => [participant | _]} ->
-        get_initials(Map.get(participant, "name", "Me"))
-
-      _ ->
-        "Unk"
     end
   end
 
