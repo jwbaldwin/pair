@@ -61,13 +61,13 @@ defmodule PairWeb.ChatLive do
           <%= for message <- @messages do %>
             <%= if message.role == :assistant do %>
               <div class="flex gap-3 items-start">
-                <div class="flex-shrink-0 mt-0.5">
+                <div class="shrink-0 mt-0.5">
                   <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
                     <span class="text-primary-foreground text-xs font-medium">A</span>
                   </div>
                 </div>
                 <div class="flex">
-                  <div class="bg-card rounded-lg px-4 py-3 shadow-sm border">
+                  <div class="bg-card rounded-lg px-4 py-3 shadow-sm border border-gray-200">
                     <p class="text-card-foreground text-sm">{message.content}</p>
                   </div>
                 </div>
@@ -79,7 +79,7 @@ defmodule PairWeb.ChatLive do
                     <p class="text-foreground text-sm">{message.content}</p>
                   </div>
                 </div>
-                <div class="flex-shrink-0 mt-0.5">
+                <div class="shrink-0 mt-0.5">
                   <div class="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
                     <span class="text-secondary-foreground text-xs font-medium">Y</span>
                   </div>

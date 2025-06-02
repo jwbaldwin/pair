@@ -42,7 +42,7 @@ defmodule PairWeb.DashboardLive do
                     navigate={~p"/record/#{recording.id}"}
                   >
                     <!-- File Icon -->
-                    <div class="flex-shrink-0 mr-3">
+                    <div class="shrink-0 mr-3">
                       <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                         <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
@@ -60,7 +60,7 @@ defmodule PairWeb.DashboardLive do
                     </div>
                     <!-- Status Badge (if needed) -->
                     <%= if recording.status != "completed" do %>
-                      <div class="flex-shrink-0 ml-2 text-sm font-medium text-gray-500">
+                      <div class="shrink-0 ml-2 text-sm font-medium text-gray-500">
                         <span class="inline-flex items-center h-2 w-2 rounded-full text-xs font-medium bg-yellow-500" />
                         {String.capitalize(Atom.to_string(recording.status))}
                       </div>

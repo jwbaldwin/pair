@@ -232,7 +232,7 @@ defmodule PairWeb.RecordingsLive do
     <!-- User Question -->
             <div class="mb-4">
               <div class="flex items-start gap-3">
-                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0">
                   JB
                 </div>
                 <div class="bg-gray-100 rounded-lg p-3 text-sm">
@@ -243,7 +243,7 @@ defmodule PairWeb.RecordingsLive do
             
     <!-- AI Response -->
             <div class="flex items-start gap-3">
-              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
                 gi
               </div>
               <div class="bg-gray-100 rounded-lg p-3 text-sm space-y-2">
@@ -295,7 +295,7 @@ defmodule PairWeb.RecordingsLive do
                 <%= for {item, index} <- Enum.with_index(Map.get(section, "content", [])) do %>
                   <li class="flex items-start">
                     <span class={[
-                      "w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0",
+                      "w-2 h-2 rounded-full mt-2 mr-3 shrink-0",
                       get_bullet_color(Map.get(section, "type"), index)
                     ]}>
                     </span>
@@ -357,7 +357,7 @@ defmodule PairWeb.RecordingsLive do
         <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
           <span class="text-gray-400 mr-2">#</span> AI Insights
         </h2>
-        <div class="bg-white rounded-lg p-4 border">
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
           <pre class="text-sm text-gray-700 whitespace-pre-wrap font-mono">{format_actions(@actions)}</pre>
         </div>
       </div>
