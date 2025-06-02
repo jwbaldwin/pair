@@ -1,4 +1,4 @@
-defmodule PairWeb.RecordingsLive do
+defmodule PairWeb.Recordings.Show do
   use PairWeb, :live_view
 
   import PairWeb.Helpers
@@ -46,6 +46,37 @@ defmodule PairWeb.RecordingsLive do
     else
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_info({:stream_chunk, chunk}, socket) do
+    send_update(PairWeb.Recordings.ChatComponent,
+      id: "chat-component",
+      action: :stream_chunk,
+      chunk: chunk
+    )
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:stream_start}, socket) do
+    send_update(PairWeb.Recordings.ChatComponent,
+      id: "chat-component",
+      action: :stream_start
+    )
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:stream_complete}, socket) do
+    send_update(PairWeb.Recordings.ChatComponent,
+      id: "chat-component",
+      action: :stream_complete
+    )
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -129,10 +160,10 @@ defmodule PairWeb.RecordingsLive do
             </div>
             
     <!-- Tab Toggle -->
-            <div class="relative flex bg-gray-100 rounded-lg p-1 mb-8 w-fit inset-shadow-lg">
+            <div class="relative flex bg-gray-100 rounded-lg p-1 mb-8 w-fit inset-shadow-sm">
               <!-- sliding background -->
               <div class={[
-                "absolute inset-1 w-[calc(50%-0.25rem)] bg-white rounded-md shadow transition-transform duration-300 ease-out",
+                "absolute inset-1 w-[calc(50%-0.25rem)] bg-white rounded-md shadow-sm transition-transform duration-300 ease-out",
                 @active_tab == "insights" && "translate-x-full"
               ]} />
               <button
@@ -222,51 +253,11 @@ defmodule PairWeb.RecordingsLive do
               </button>
             </div>
           </div>
-          
-    <!-- Ask pAIr Section -->
-          <div>
-            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-              ASK pAIr
-            </h3>
-            
-    <!-- User Question -->
-            <div class="mb-4">
-              <div class="flex items-start gap-3">
-                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0">
-                  JB
-                </div>
-                <div class="bg-gray-100 rounded-lg p-3 text-sm">
-                  What are the 3-4 next steps from the meeting above that I need to do?
-                </div>
-              </div>
-            </div>
-            
-    <!-- AI Response -->
-            <div class="flex items-start gap-3">
-              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-                gi
-              </div>
-              <div class="bg-gray-100 rounded-lg p-3 text-sm space-y-2">
-                <p><strong>1. Evaluate Tool Finder placement potential for Pair AI.</strong></p>
-                <p><strong>2. Review the full feature set of Pair AI.</strong></p>
-                <p><strong>3. Make a decision on the coverage approach for Pair AI.</strong></p>
-              </div>
-            </div>
-            
-    <!-- Input for new questions -->
-            <div class="mt-4">
-              <div class="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Ask a question about this meeting..."
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">
-                  Ask
-                </button>
-              </div>
-            </div>
-          </div>
+          <.live_component
+            module={PairWeb.Recordings.ChatComponent}
+            id="chat-component"
+            recording={@recording}
+          />
         </div>
       </div>
     </div>

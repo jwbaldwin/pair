@@ -1,4 +1,4 @@
-defmodule PairWeb.DashboardLive do
+defmodule PairWeb.Dashboard.Index do
   use PairWeb, :live_view
 
   import PairWeb.Helpers
@@ -39,7 +39,7 @@ defmodule PairWeb.DashboardLive do
                 <%= for recording <- recordings do %>
                   <.link
                     class="py-3 px-3 flex items-center cursor-pointer rounded-lg hover:bg-gray-50 transition-colors duration-150"
-                    navigate={~p"/record/#{recording.id}"}
+                    navigate={~p"/recordings/#{recording.id}"}
                   >
                     <!-- File Icon -->
                     <div class="shrink-0 mr-3">

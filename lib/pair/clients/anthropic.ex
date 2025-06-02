@@ -10,7 +10,7 @@ defmodule Pair.Clients.Anthropic do
 
   @base_url "https://api.anthropic.com/v1"
   @api_version "2023-06-01"
-  @default_model "claude-3-5-sonnet-20241022"
+  @default_model "claude-sonnet-4-20250514"
   @default_max_tokens 1024
 
   defp client(opts \\ []) do
@@ -77,18 +77,6 @@ defmodule Pair.Clients.Anthropic do
 
   @doc """
   Streams a response from Anthropic's API back to the caller.
-
-  ## Parameters
-    * `pid` - Process ID to send streaming events to
-    * `conversation` - List of message maps with `:role` and `:content` keys
-
-  ## Options
-    * `:model` - The Claude model to use. Defaults to "claude-3-5-sonnet-20241022".
-    * `:max_tokens` - Maximum tokens in the response. Defaults to 1024.
-
-  ## Returns
-    * `:ok` - When streaming completes successfully
-    * `{:error, reason}` - When an error occurs
   """
   @spec stream_response(pid(), list(map())) :: :ok | {:error, any()}
   def stream_response(pid, conversation) do
@@ -113,7 +101,7 @@ defmodule Pair.Clients.Anthropic do
             {:cont, {req, res}}
 
           %{status: status} ->
-            Logger.error("Error: Response from Anthropic API: #{status} - #{inspect(res.body)}")
+            Logger.error("Error: Response from Anthropic API: #{status} - #{inspect(res)}")
             {:halt, {req, res}}
         end
       end
