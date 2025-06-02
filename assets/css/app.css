@@ -1,5 +1,7 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #FD4F00;
+}
 
 /* This file is for your main application CSS */

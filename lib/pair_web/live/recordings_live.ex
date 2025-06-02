@@ -129,7 +129,7 @@ defmodule PairWeb.RecordingsLive do
             </div>
             
     <!-- Tab Toggle -->
-            <div class="relative flex bg-gray-100 rounded-lg p-1 mb-8 w-fit inset-shadow">
+            <div class="relative flex bg-gray-100 rounded-lg p-1 mb-8 w-fit inset-shadow-lg">
               <!-- sliding background -->
               <div class={[
                 "absolute inset-1 w-[calc(50%-0.25rem)] bg-white rounded-md shadow transition-transform duration-300 ease-out",
