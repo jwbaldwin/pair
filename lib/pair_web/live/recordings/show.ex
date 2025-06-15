@@ -203,14 +203,11 @@ defmodule PairWeb.Recordings.Show do
         </div>
         
     <!-- Right Sidebar -->
-        <div class="w-80 bg-white border-l border-gray-200 p-6 space-y-8">
+        <div class="relative w-80 bg-stone-100 border-l border-gray-200 p-6 space-y-8">
           <!-- Share Notes Section -->
           <div>
-            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-              SHARE NOTES
-            </h3>
             <div class="grid grid-cols-2 gap-3">
-              <button class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+              <button class="flex items-center bg-white justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -222,7 +219,7 @@ defmodule PairWeb.Recordings.Show do
                 </svg>
                 Copy link
               </button>
-              <button class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+              <button class="flex items-center bg-white justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -234,7 +231,7 @@ defmodule PairWeb.Recordings.Show do
                 </svg>
                 Copy text
               </button>
-              <button class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+              <button class="flex items-center bg-white justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     stroke-linecap="round"
@@ -246,7 +243,7 @@ defmodule PairWeb.Recordings.Show do
                 </svg>
                 Email
               </button>
-              <button class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+              <button class="flex items-center bg-white justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
                 <div class="w-4 h-4 bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 rounded">
                 </div>
                 Slack

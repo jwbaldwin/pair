@@ -8,6 +8,7 @@
 - `mix test path/to/test_file.exs:line_number` - Run specific test
 - `mix format` - Format code
 - `mix ecto.reset` - Reset database
+- `mix test.interactive` - Run tests in watch mode
 
 ## Code Style Guidelines
 - Follow Elixir style (snake_case for variables/functions, CamelCase for modules)
@@ -15,11 +16,12 @@
 - Prefer pipe operator |> for function chaining
 - Use pattern matching over conditional logic where appropriate
 - Error handling: use `with` statements for happy path, handle errors explicitly
-- Tests: use descriptive names following "test description, %{conn: conn} do" pattern
-- For UI components, follow Phoenix Component patterns from core_components.ex
+- Tests: use descriptive names and leverage fixtures from support modules
+- Use Mimic for mocking in tests (see test_helper.exs)
+- For UI components, follow Phoenix Component patterns with attr/slot declarations
 
 ## Project Structure
-- Phoenix 1.7 architecture with LiveView
-- Uses Tailwind CSS for styling
-- Includes LangChain, Req, and Oban for AI integration
+- Phoenix 1.7 architecture with LiveView and Tailwind CSS
+- Uses Instructor, Req, and Oban for AI integration
 - Follows standard Phoenix directory structure (lib/pair, lib/pair_web)
+- Uses ex_machina for test factories and Mimic for mocking

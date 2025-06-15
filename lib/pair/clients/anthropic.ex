@@ -83,9 +83,12 @@ defmodule Pair.Clients.Anthropic do
     body = %{
       model: @default_model,
       max_tokens: @default_max_tokens,
+      system: Prompts.transcript_chat(),
       messages: conversation,
       stream: true
     }
+
+    # TODO: need to check the 400 error on message 
 
     Req.post!(client(),
       json: body,
