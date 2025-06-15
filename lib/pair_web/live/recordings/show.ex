@@ -89,7 +89,7 @@ defmodule PairWeb.Recordings.Show do
           <!-- Header -->
           <.link
             navigate={~p"/"}
-            class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            class="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors"
           >
             <svg
               width="16"
@@ -108,45 +108,47 @@ defmodule PairWeb.Recordings.Show do
             Back
           </.link>
           <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">
+            <h1 class="text-2xl font-bold text-stone-800">
               {get_meeting_title(@recording)}
             </h1>
             
     <!-- Meeting Metadata -->
             <% metadata = Map.get(@recording.meeting_notes, "meeting_metadata") %>
             <%= if metadata && Map.get(metadata, "meeting_type") do %>
-              <div class="mb-8 text-sm text-zinc-700">
-                <span class="bg-zinc-50 p-3 rounded-lg">{Map.get(metadata, "meeting_type")}</span>
+              <div class="mb-2 text-sm text-stone-700">
+                <span class="text-stone-500">
+                  {Map.get(metadata, "meeting_type")}
+                </span>
               </div>
             <% end %>
             
     <!-- Meeting Info -->
-            <div class="flex items-center gap-6 text-sm text-gray-600 mb-6">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                    clip-rule="evenodd"
-                  >
-                  </path>
-                </svg>
+            <div class="flex items-center gap-6 text-sm text-stone-800 mb-6">
+              <div class="flex items-center gap-2 bg-stone-100 border border-stone-200/75 shadow-xs rounded-md px-2 py-1">
+                <.icon name="calendar" class="w-4 h-4" />
                 <span>{format_time(@recording.inserted_at)}</span>
               </div>
               <div class="flex items-center gap-2">
                 <!-- Participants Section -->
                 <%= if Map.get(@recording.meeting_notes, "participants") && length(Map.get(@recording.meeting_notes, "participants", [])) > 0 do %>
-                  <div class="flex flex-wrap gap-3">
-                    <%= for participant <- Map.get(@recording.meeting_notes, "participants", []) do %>
-                      <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                        <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                  <div class="group flex items-center">
+                    <%= for {participant, index} <- Enum.with_index(Map.get(@recording.meeting_notes, "participants", [])) do %>
+                      <div class={[
+                        "flex items-center gap-2 bg-stone-100 border border-stone-200/75 shadow-xs rounded-md px-2 py-1 transition-all duration-300 ease-out",
+                        index > 0 && "-ml-5 group-hover:ml-3"
+                      ]}>
+                        <div class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
                           {get_initials(Map.get(participant, "name", ""))}
                         </div>
-                        <div>
-                          <div class="text-sm font-medium text-gray-900">
+                        <div class={[
+                          "transition-all duration-300 ease-out overflow-hidden",
+                          index < length(Map.get(@recording.meeting_notes, "participants", [])) - 1 &&
+                            "w-0 opacity-0 group-hover:w-auto group-hover:opacity-100"
+                        ]}>
+                          <div class="text-sm text-stone-800 whitespace-nowrap">
                             {Map.get(participant, "name", "Client")}
                             <%= if Map.get(participant, "role") do %>
-                              <span class="text-xs text-gray-500">
+                              <span class="text-xs text-stone-500">
                                 - {Map.get(participant, "role")}
                               </span>
                             <% end %>
@@ -160,19 +162,19 @@ defmodule PairWeb.Recordings.Show do
             </div>
             
     <!-- Tab Toggle -->
-            <div class="relative flex bg-gray-100 rounded-lg p-1 mb-8 w-fit inset-shadow-sm">
+            <div class="relative flex bg-stone-100 rounded-md p-1 mb-8 w-48 inset-shadow-sm">
               <!-- sliding background -->
               <div class={[
                 "absolute inset-1 w-[calc(50%-0.25rem)] bg-white rounded-md shadow-sm transition-transform duration-300 ease-out",
-                @active_tab == "insights" && "translate-x-full"
+                @active_tab == "transcript" && "translate-x-full"
               ]} />
               <button
                 phx-click="switch_tab"
                 phx-value-tab="meeting_notes"
                 class={[
-                  "relative z-10 px-3 py-1.5 basis-1/2 text-sm font-medium rounded-md shrink-0",
-                  @active_tab == "meeting_notes" && "text-gray-900",
-                  @active_tab != "meeting_notes" && "text-gray-600 hover:text-gray-900"
+                  "relative z-10 px-3 py-1.5 basis-1/2 text-sm rounded-md shrink-0",
+                  @active_tab == "meeting_notes" && "text-stone-900",
+                  @active_tab != "meeting_notes" && "text-stone-600 hover:text-stone-900"
                 ]}
               >
                 Notes
@@ -180,14 +182,14 @@ defmodule PairWeb.Recordings.Show do
 
               <button
                 phx-click="switch_tab"
-                phx-value-tab="insights"
+                phx-value-tab="transcript"
                 class={[
-                  "relative z-10 px-3 py-1.5 basis-1/2 text-sm font-medium rounded-md shirnk-0",
-                  @active_tab == "insights" && "text-gray-900",
-                  @active_tab != "insights" && "text-gray-600 hover:text-gray-900"
+                  "relative z-10 px-3 py-1.5 basis-1/2 text-sm rounded-md shrink-0",
+                  @active_tab == "transcript" && "text-stone-900",
+                  @active_tab != "transcript" && "text-stone-600 hover:text-stone-900"
                 ]}
               >
-                Insights
+                Transcript
               </button>
             </div>
           </div>
@@ -197,56 +199,21 @@ defmodule PairWeb.Recordings.Show do
             <%= if @active_tab == "meeting_notes" do %>
               <.render_meeting_notes meeting_notes={@recording.meeting_notes} />
             <% else %>
-              <.render_insights actions={@recording.actions} />
+              <.render_transcript actions={@recording.transcription} />
             <% end %>
           </div>
         </div>
         
     <!-- Right Sidebar -->
-        <div class="relative w-80 bg-stone-100 border-l border-gray-200 p-6 space-y-8">
+        <div class="relative w-80 bg-stone-100 border-l border-stone-200 p-6 space-y-8">
           <!-- Share Notes Section -->
           <div>
-            <div class="grid grid-cols-2 gap-3">
-              <button class="flex items-center bg-white justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                  >
-                  </path>
-                </svg>
-                Copy link
+            <div class="flex gap-3">
+              <button class="flex items-center bg-white justify-center gap-2 px-2 py-2 border border-stone-200/75 shadow-xs rounded-md hover:border-stone-200 text-sm">
+                <.icon name="link" class="w-4 h-4" /> Copy link
               </button>
-              <button class="flex items-center bg-white justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  >
-                  </path>
-                </svg>
-                Copy text
-              </button>
-              <button class="flex items-center bg-white justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  >
-                  </path>
-                </svg>
-                Email
-              </button>
-              <button class="flex items-center bg-white justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                <div class="w-4 h-4 bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 rounded">
-                </div>
-                Slack
+              <button class="flex items-center bg-white justify-center gap-2 px-2 py-2 border border-stone-200/75 shadow-xs rounded-md hover:border-stone-200 text-sm">
+                <.icon name="email" class="w-4 h-4" /> Email
               </button>
             </div>
           </div>
@@ -269,11 +236,11 @@ defmodule PairWeb.Recordings.Show do
       <%= if Map.get(@meeting_notes, "sections") do %>
         <%= for section <- Map.get(@meeting_notes, "sections", []) do %>
           <div class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <span class="text-gray-400 mr-2">#</span>
+            <h2 class="text-xl font-semibold text-stone-900 mb-4 flex items-center">
+              <span class="text-stone-400 mr-2">#</span>
               {Map.get(section, "title", "Untitled Section")}
               <%= if Map.get(section, "type") do %>
-                <span class="ml-2 px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md uppercase">
+                <span class="ml-2 px-2 py-1 text-xs font-medium bg-stone-100 text-stone-600 rounded-md uppercase">
                   {format_section_type(Map.get(section, "type"))}
                 </span>
               <% end %>
@@ -287,18 +254,18 @@ defmodule PairWeb.Recordings.Show do
                       get_bullet_color(Map.get(section, "type"), index)
                     ]}>
                     </span>
-                    <span class="text-gray-700">{item}</span>
+                    <span class="text-stone-700">{item}</span>
                   </li>
                 <% end %>
               </ul>
             <% else %>
-              <p class="text-gray-500 italic">No content available for this section.</p>
+              <p class="text-stone-500 italic">No content available for this section.</p>
             <% end %>
           </div>
         <% end %>
       <% else %>
         <div class="text-center py-12">
-          <div class="text-gray-400 mb-4">
+          <div class="text-stone-400 mb-4">
             <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -309,15 +276,15 @@ defmodule PairWeb.Recordings.Show do
               </path>
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No meeting notes available</h3>
-          <p class="text-gray-500">
+          <h3 class="text-lg font-medium text-stone-900 mb-2">No meeting notes available</h3>
+          <p class="text-stone-500">
             Meeting notes are still being processed or haven't been generated yet.
           </p>
         </div>
       <% end %>
     <% else %>
       <div class="text-center py-12">
-        <div class="text-gray-400 mb-4">
+        <div class="text-stone-400 mb-4">
           <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
@@ -328,8 +295,8 @@ defmodule PairWeb.Recordings.Show do
             </path>
           </svg>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No meeting notes available</h3>
-        <p class="text-gray-500">
+        <h3 class="text-lg font-medium text-stone-900 mb-2">No meeting notes available</h3>
+        <p class="text-stone-500">
           Meeting notes are still being processed or haven't been generated yet.
         </p>
       </div>
@@ -337,21 +304,21 @@ defmodule PairWeb.Recordings.Show do
     """
   end
 
-  # Component for rendering insights (legacy actions)
-  defp render_insights(assigns) do
+  # Component for rendering transcript (legacy actions)
+  defp render_transcript(assigns) do
     ~H"""
     <%= if @actions && @actions != "" do %>
-      <div class="bg-gray-50 rounded-lg p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <span class="text-gray-400 mr-2">#</span> AI Insights
+      <div class="bg-stone-50 rounded-md p-6">
+        <h2 class="text-xl font-semibold text-stone-900 mb-4 flex items-center">
+          <span class="text-stone-400 mr-2">#</span> Transcript
         </h2>
-        <div class="bg-white rounded-lg p-4 border border-gray-200">
-          <pre class="text-sm text-gray-700 whitespace-pre-wrap font-mono">{format_actions(@actions)}</pre>
+        <div class="bg-white rounded-md p-4 border border-stone-200">
+          <pre class="text-sm text-stone-700 whitespace-pre-wrap font-mono">{format_actions(@actions)}</pre>
         </div>
       </div>
     <% else %>
       <div class="text-center py-12">
-        <div class="text-gray-400 mb-4">
+        <div class="text-stone-400 mb-4">
           <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
@@ -362,8 +329,8 @@ defmodule PairWeb.Recordings.Show do
             </path>
           </svg>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No insights available</h3>
-        <p class="text-gray-500">
+        <h3 class="text-lg font-medium text-stone-900 mb-2">No transcript available</h3>
+        <p class="text-stone-500">
           AI insights are still being processed or haven't been generated yet.
         </p>
       </div>
@@ -411,14 +378,14 @@ defmodule PairWeb.Recordings.Show do
         "bg-purple-400"
 
       "overview" ->
-        "bg-gray-400"
+        "bg-stone-400"
 
       _ ->
         # Alternate colors for other types
         case rem(index, 3) do
-          0 -> "bg-gray-400"
-          1 -> "bg-gray-300"
-          2 -> "bg-gray-200"
+          0 -> "bg-stone-400"
+          1 -> "bg-stone-300"
+          2 -> "bg-stone-200"
         end
     end
   end

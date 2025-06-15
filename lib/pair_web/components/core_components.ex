@@ -571,30 +571,77 @@ defmodule PairWeb.CoreComponents do
   end
 
   @doc """
-  Renders a [Heroicon](https://heroicons.com).
+  Renders an icon from custom SVG icons.
 
-  Heroicons come in three styles – outline, solid, and mini.
-  By default, the outline style is used, but solid and mini may
-  be applied by using the `-solid` and `-mini` suffix.
-
-  You can customize the size and colors of the icons by setting
-  width, height, and background color classes.
-
-  Icons are extracted from the `deps/heroicons` directory and bundled within
-  your compiled app.css by the plugin in your `assets/tailwind.config.js`.
+  ## Custom Icons
+  Custom SVG icons can be placed in `priv/static/icons/` directory.
+  Reference them by filename without the `.svg` extension.
 
   ## Examples
-
-      <.icon name="hero-x-mark-solid" />
-      <.icon name="hero-arrow-path" class="ml-1 w-3 h-3 animate-spin" />
+      <.icon name="calendar" class="h-5 w-5" />
+      <.icon name="paper-airplane" class="h-5 w-5" />
   """
   attr :name, :string, required: true
   attr :class, :string, default: nil
 
-  def icon(%{name: "hero-" <> _} = assigns) do
-    ~H"""
-    <span class={[@name, @class]} />
-    """
+  def icon(assigns) do
+    svg_content = load_custom_icon(assigns.name, assigns.class)
+
+    if svg_content do
+      assigns = assign(assigns, :svg_content, svg_content)
+
+      ~H"""
+      {Phoenix.HTML.raw(@svg_content)}
+      """
+    else
+      ~H"""
+      <span class={["icon-missing", @class]} title={"Icon '#{@name}' not found"}>⚠</span>
+      """
+    end
+  end
+
+  defp load_custom_icon(name, class) do
+    icon_path = Path.join([Application.app_dir(:pair), "priv", "static", "icons", "#{name}.svg"])
+
+    if File.exists?(icon_path) do
+      case File.read(icon_path) do
+        {:ok, content} -> process_svg_content(content, class)
+        {:error, _} -> nil
+      end
+    else
+      nil
+    end
+  end
+
+  defp process_svg_content(svg_content, class) do
+    class_attr = if class, do: ~s( class="#{class}"), else: ""
+
+    svg_content
+    |> String.replace(~r/\s+/, " ")
+    |> String.trim()
+    |> case do
+      "<svg" <> rest ->
+        # If SVG already has class attribute, we need to merge them
+        if String.contains?(rest, ~s( class=")) do
+          String.replace(svg_content, ~r/class="([^"]*)"/, fn _, existing_classes ->
+            merged_classes = if class, do: "#{existing_classes} #{class}", else: existing_classes
+            ~s( class="#{merged_classes}")
+          end)
+        else
+          String.replace(svg_content, "<svg", "<svg#{class_attr}")
+        end
+
+      _ ->
+        svg_content
+    end
+  end
+
+  @doc """
+  Validates if a custom icon exists.
+  """
+  def custom_icon_exists?(name) do
+    icon_path = Path.join([Application.app_dir(:pair), "priv", "static", "icons", "#{name}.svg"])
+    File.exists?(icon_path)
   end
 
   ## JS Commands
