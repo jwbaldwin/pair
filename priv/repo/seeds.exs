@@ -11,6 +11,7 @@
 # and so on) as they will fail if something goes wrong.
 
 alias Pair.Recordings.Recording
+alias Pair.MeetingTemplates.MeetingTemplate
 alias Pair.Repo
 
 transcript = """
@@ -202,6 +203,26 @@ meeting_notes_json =
       }
     ]
   })
+
+%MeetingTemplate{}
+|> MeetingTemplate.changeset(%{
+  name: "Initial Inquiry",
+  description: """
+  This template is designed for wedding photographers conducting initial consultation calls with potential clients - sort of a two way interview.
+  Focus on extracting key details about the client, their preferences and the vibe they want for their wedding.
+  Pay special attention to stylistic details, personal preferences and likes-dislikes, or details around pricing and length of coverage.
+  Include specific quotes, numbers, dates, and pricing when mentioned.
+  """,
+  sections: [
+    "About the client",
+    "Wedding vision",
+    "Venue, and wedding details",
+    "Pricing & additional services",
+    "Next steps & follow-upaActions"
+  ],
+  is_system_template: true
+})
+|> Repo.insert!()
 
 %Recording{}
 |> Recording.changeset(%{

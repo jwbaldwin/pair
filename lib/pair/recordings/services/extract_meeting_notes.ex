@@ -5,12 +5,14 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
 
   alias Pair.Prompts.MeetingNotes
   alias Pair.Recordings.Recording
+  alias Pair.MeetingTemplates.MeetingTemplate
 
   require Logger
 
   @doc @moduledoc
-  @spec call(Recording.t()) :: {:ok, MeetingNotes.t()} | {:error, any()}
-  def call(%Recording{transcription: transcript}) when is_binary(transcript) do
+  @spec call(Recording.t(), MeetingTemplate.t() | nil) ::
+          {:ok, MeetingNotes.t()} | {:error, any()}
+  def call(%Recording{transcription: transcript}, template \\ nil) when is_binary(transcript) do
     Logger.info("Extracting structured meeting notes from transcript")
 
     with {:ok, notes} <-
@@ -25,16 +27,7 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
                },
                %{
                  role: "user",
-                 content: """
-                 Extract structured meeting notes from this transcript:
-
-                 <transcript>
-                 #{transcript}
-                 </transcript>
-
-                 Please organize the insights into clear sections with relevant bullet points.
-                 Focus on actionable information and key decisions.
-                 """
+                 content: build_user_prompt(transcript, template)
                }
              ]
            ) do
@@ -90,8 +83,38 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
 
   defp format_sections(_), do: []
 
-  defp system_prompt do
+  defp build_user_prompt(transcript, template) do
+    base_prompt = """
+    Extract structured meeting notes from this transcript:
+
+    <transcript>
+    #{transcript}
+    </transcript>
+
+    Please organize the insights into clear sections with relevant bullet points.
+    Focus on actionable information and key decisions.
     """
+
+    case template do
+      %MeetingTemplate{sections: sections} when is_list(sections) and length(sections) > 0 ->
+        sections_text = sections |> Enum.map(&"- #{&1}") |> Enum.join("\n")
+
+        base_prompt <>
+          """
+
+          Use these specific sections to organize the content:
+          #{sections_text}
+
+          Structure your response using these section titles where relevant content exists.
+          """
+
+      _ ->
+        base_prompt
+    end
+  end
+
+  defp system_prompt(template \\ nil) do
+    base_prompt = """
     You are an expert meeting assistant that extracts structured insights from meeting transcripts.
 
     Your task is to:
@@ -122,5 +145,18 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
 
     Be accurate and don't invent information that isn't present in the transcript.
     """
+
+    case template do
+      %MeetingTemplate{description: description} when is_binary(description) ->
+        base_prompt <>
+          """
+
+          TEMPLATE-SPECIFIC INSTRUCTIONS:
+          #{description}
+          """
+
+      _ ->
+        base_prompt
+    end
   end
 end
