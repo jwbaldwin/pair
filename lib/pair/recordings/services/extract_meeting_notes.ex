@@ -90,9 +90,6 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
     <transcript>
     #{transcript}
     </transcript>
-
-    Please organize the insights into clear sections with relevant bullet points.
-    Focus on actionable information and key decisions.
     """
 
     case template do
@@ -102,14 +99,25 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
         base_prompt <>
           """
 
-          Use these specific sections to organize the content:
+          REQUIRED SECTIONS:
+          You MUST organize the content using these specific sections:
           #{sections_text}
 
-          Structure your response using these section titles where relevant content exists.
+          EXTRACTION GUIDELINES:
+          - Structure your response using these section titles where relevant content exists
+          - If a section has no relevant content, omit it entirely
+          - Include specific quotes, numbers, dates, and concrete details when mentioned
+          - Prioritize actionable information and key decisions within each section
+          - Focus on extracting information that would be valuable for this type of meeting
           """
 
       _ ->
-        base_prompt
+        base_prompt <>
+          """
+
+          Please organize the insights into clear sections with relevant bullet points.
+          Focus on actionable information and key decisions.
+          """
     end
   end
 
@@ -147,12 +155,15 @@ defmodule Pair.Recordings.Services.ExtractMeetingNotes do
     """
 
     case template do
-      %MeetingTemplate{description: description} when is_binary(description) ->
+      %MeetingTemplate{description: description, name: name} when is_binary(description) ->
         base_prompt <>
           """
+          TEMPLATE CONTEXT:
+          This transcript is from a "#{name}" type meeting.
 
-          TEMPLATE-SPECIFIC INSTRUCTIONS:
-          #{description}
+          Template guidance: #{description}
+
+          Use this context to better understand the meeting's purpose and extract the most relevant information.
           """
 
       _ ->

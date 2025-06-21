@@ -19,6 +19,7 @@ defmodule PairWeb.Router do
 
     live "/", Dashboard.Index, :index
     live "/recordings/:id", Recordings.Show, :show
+    live "/templates", Templates.Index, :index
   end
 
   scope "/api", PairWeb do

@@ -87,26 +87,7 @@ defmodule PairWeb.Recordings.Show do
         <!-- Main Content Area -->
         <div class="flex-1 p-8 overflow-y-auto">
           <!-- Header -->
-          <.link
-            navigate={~p"/"}
-            class="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="h-4 w-4"
-            >
-              <path d="m12 19-7-7 7-7" />
-              <path d="M19 12H5" />
-            </svg>
-            Back
-          </.link>
+          <.back navigate={~p"/"}>Back</.back>
           <div class="mb-8">
             <h1 class="text-2xl font-bold text-stone-800">
               {get_meeting_title(@recording)}
@@ -209,12 +190,12 @@ defmodule PairWeb.Recordings.Show do
           <!-- Share Notes Section -->
           <div>
             <div class="flex gap-3">
-              <button class="flex items-center bg-white justify-center gap-2 px-2 py-2 border border-stone-200/75 shadow-xs rounded-md hover:border-stone-200 text-sm">
+              <.button class="flex items-center bg-white justify-center gap-2 px-2 py-2 border border-stone-200/75 shadow-xs rounded-md hover:border-stone-200 text-sm">
                 <.icon name="link" class="w-4 h-4" /> Copy link
-              </button>
-              <button class="flex items-center bg-white justify-center gap-2 px-2 py-2 border border-stone-200/75 shadow-xs rounded-md hover:border-stone-200 text-sm">
+              </.button>
+              <.button>
                 <.icon name="email" class="w-4 h-4" /> Email
-              </button>
+              </.button>
             </div>
           </div>
           <.live_component

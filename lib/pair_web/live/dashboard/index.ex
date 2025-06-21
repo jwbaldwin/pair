@@ -5,6 +5,7 @@ defmodule PairWeb.Dashboard.Index do
 
   alias Pair.Recordings
   alias Phoenix.PubSub
+  alias PairWeb.Dashboard.Navbar
 
   @impl true
   def mount(_params, _session, socket) do
@@ -28,7 +29,8 @@ defmodule PairWeb.Dashboard.Index do
     ~H"""
     <div class="flex flex-col h-screen bg-white">
       <div class="flex-1 overflow-y-auto px-4 py-12">
-        <div class="max-w-3xl mx-auto space-y-4">
+        <div class="max-w-3xl mx-auto space-y-6">
+          <Navbar.navbar />
           <div class="w-full rounded-lg">
             <%= for {date_group, recordings} <- @recordings do %>
               <!-- Date Header -->

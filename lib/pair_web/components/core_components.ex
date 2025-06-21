@@ -1,18 +1,6 @@
 defmodule PairWeb.CoreComponents do
   @moduledoc """
   Provides core UI components.
-
-  At first glance, this module may seem daunting, but its goal is to provide
-  core building blocks for your application, such as modals, tables, and
-  forms. The components consist mostly of markup and are well-documented
-  with doc strings and declarative assigns. You may customize and style
-  them in any way you want, based on your application growth and needs.
-
-  The default components use Tailwind CSS, a utility-first CSS framework.
-  See the [Tailwind CSS documentation](https://tailwindcss.com) to learn
-  how to customize them or feel free to swap in another framework altogether.
-
-  Icons are provided by [heroicons](https://heroicons.com). See `icon/1` for usage.
   """
   use Phoenix.Component
   use Gettext, backend: PairWeb.Gettext
@@ -223,6 +211,7 @@ defmodule PairWeb.CoreComponents do
   attr :type, :string, default: nil
   attr :class, :string, default: nil
   attr :rest, :global, include: ~w(disabled form name value)
+  attr :primary, :boolean, default: false
 
   slot :inner_block, required: true
 
@@ -231,13 +220,17 @@ defmodule PairWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
-        "text-sm font-semibold leading-6 text-white active:text-white/80",
+        "group flex items-center justify-center gap-2 px-2 py-2 border shadow-xs rounded-md text-sm cursor-pointer transition-colors duration-150",
+        @primary &&
+          "text-white border-lime-600 bg-gradient-to-b from-lime-500 via-lime-600 to-lime-700 px-4 text-neutral-50 shadow-[inset_0_1px_0px_0px_#fdba74] active:[box-shadow:none]",
+        !@primary && "bg-white border-stone-200/75 hover:border-stone-300 ",
         @class
       ]}
       {@rest}
     >
-      {render_slot(@inner_block)}
+      <span class={if @primary, do: "block group-active:[transform:translate3d(0,1px,0)]", else: ""} ]>
+        {render_slot(@inner_block)}
+      </span>
     </button>
     """
   end
@@ -558,15 +551,26 @@ defmodule PairWeb.CoreComponents do
 
   def back(assigns) do
     ~H"""
-    <div class="mt-16">
-      <.link
-        navigate={@navigate}
-        class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+    <.link
+      navigate={@navigate}
+      class="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors"
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-4 w-4"
       >
-        <.icon name="hero-arrow-left-solid" class="h-3 w-3" />
-        {render_slot(@inner_block)}
-      </.link>
-    </div>
+        <path d="m12 19-7-7 7-7" />
+        <path d="M19 12H5" />
+      </svg>
+      {render_slot(@inner_block)}
+    </.link>
     """
   end
 
