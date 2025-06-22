@@ -42,7 +42,9 @@ defmodule PairWeb.Templates.IndexTest do
              |> render_change() =~ "can&#39;t be blank"
 
       assert index_live
-             |> form("form", meeting_template: Map.put(@create_attrs, "sections_text", "Section 1\nSection 2"))
+             |> form("form",
+               meeting_template: Map.put(@create_attrs, "sections_text", "Section 1\nSection 2")
+             )
              |> render_submit()
 
       html = render(index_live)
@@ -60,7 +62,10 @@ defmodule PairWeb.Templates.IndexTest do
              |> render_change() =~ "can&#39;t be blank"
 
       assert index_live
-             |> form("form", meeting_template: Map.put(@update_attrs, "sections_text", "Updated Section 1\nUpdated Section 2"))
+             |> form("form",
+               meeting_template:
+                 Map.put(@update_attrs, "sections_text", "Updated Section 1\nUpdated Section 2")
+             )
              |> render_submit()
 
       html = render(index_live)

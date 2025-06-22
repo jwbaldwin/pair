@@ -6,9 +6,13 @@ defmodule PairWeb.Templates.Index do
 
   @impl true
   def mount(_params, _session, socket) do
+    templates = MeetingTemplates.list_meeting_templates()
+    grouped_templates = group_templates_by_category(templates)
+
     {:ok,
      assign(socket,
-       templates: MeetingTemplates.list_meeting_templates(),
+       templates: templates,
+       grouped_templates: grouped_templates,
        show_form: false,
        form: to_form(MeetingTemplates.change_meeting_template(%MeetingTemplate{})),
        editing_template: nil
@@ -47,7 +51,13 @@ defmodule PairWeb.Templates.Index do
     template = MeetingTemplates.get_meeting_template!(id)
     {:ok, _} = MeetingTemplates.delete_meeting_template(template)
 
-    {:noreply, assign(socket, templates: MeetingTemplates.list_meeting_templates())}
+    templates = MeetingTemplates.list_meeting_templates()
+
+    {:noreply,
+     assign(socket,
+       templates: templates,
+       grouped_templates: group_templates_by_category(templates)
+     )}
   end
 
   @impl true
@@ -66,9 +76,12 @@ defmodule PairWeb.Templates.Index do
       nil ->
         case MeetingTemplates.create_meeting_template(template_params) do
           {:ok, _template} ->
+            templates = MeetingTemplates.list_meeting_templates()
+
             {:noreply,
              assign(socket,
-               templates: MeetingTemplates.list_meeting_templates(),
+               templates: templates,
+               grouped_templates: group_templates_by_category(templates),
                show_form: false,
                form: to_form(MeetingTemplates.change_meeting_template(%MeetingTemplate{}))
              )}
@@ -80,9 +93,12 @@ defmodule PairWeb.Templates.Index do
       editing_template ->
         case MeetingTemplates.update_meeting_template(editing_template, template_params) do
           {:ok, _template} ->
+            templates = MeetingTemplates.list_meeting_templates()
+
             {:noreply,
              assign(socket,
-               templates: MeetingTemplates.list_meeting_templates(),
+               templates: templates,
+               grouped_templates: group_templates_by_category(templates),
                show_form: false,
                editing_template: nil,
                form: to_form(MeetingTemplates.change_meeting_template(%MeetingTemplate{}))
@@ -93,6 +109,24 @@ defmodule PairWeb.Templates.Index do
         end
     end
   end
+
+  defp group_templates_by_category(templates) do
+    templates
+    |> Enum.group_by(fn template ->
+      template.category || "Uncategorized"
+    end)
+    |> Enum.sort_by(fn {category, _} -> category end)
+  end
+
+  defp get_template_icon(template) do
+    template.icon || default_icon_for_category(template.category)
+  end
+
+  defp default_icon_for_category(nil), do: "document-text"
+  defp default_icon_for_category("Commercial"), do: "currency-dollar"
+  defp default_icon_for_category("Leadership"), do: "user-group"
+  defp default_icon_for_category("Product"), do: "cube"
+  defp default_icon_for_category(_), do: "document-text"
 
   @impl true
   def render(assigns) do
@@ -106,9 +140,9 @@ defmodule PairWeb.Templates.Index do
               <div class="flex items-center space-x-3 mb-2">
                 <.back navigate={~p"/"}>Back</.back>
               </div>
-              <h1 class="text-2xl font-bold text-stone-900">Meeting Templates</h1>
+              <h1 class="text-xl font-semibold text-stone-800">My templates</h1>
               <p class="text-stone-600 mt-1">
-                Create and manage templates for different types of meetings
+                Create custom templates for different types of meetings
               </p>
             </div>
             <.button phx-click="new_template">
@@ -144,6 +178,30 @@ defmodule PairWeb.Templates.Index do
                       />
                     </div>
 
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <.input
+                          field={@form[:category]}
+                          type="select"
+                          label="Category"
+                          options={[
+                            {"Commercial", "Commercial"},
+                            {"Leadership", "Leadership"},
+                            {"Product", "Product"},
+                            {"Other", "Other"}
+                          ]}
+                          prompt="Select category"
+                        />
+                      </div>
+                      <div>
+                        <.input
+                          field={@form[:icon]}
+                          label="Icon (optional)"
+                          placeholder="e.g., currency-dollar, user-group"
+                        />
+                      </div>
+                    </div>
+
                     <div>
                       <label class="block text-sm font-medium text-stone-700 mb-2">
                         Sections (one per line)
@@ -151,7 +209,7 @@ defmodule PairWeb.Templates.Index do
                       <textarea
                         name="meeting_template[sections_text]"
                         rows="6"
-                        class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
                         placeholder={
                           ~s(About the client\nProject requirements\nTimeline & budget\nNext steps)
                         }
@@ -171,47 +229,68 @@ defmodule PairWeb.Templates.Index do
           <% end %>
           
     <!-- Templates List -->
-          <div class="space-y-4">
-            <%= for template <- @templates do %>
-              <div class="bg-white border border-stone-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <div class="flex items-center space-x-2 mb-2">
-                      <h3 class="text-lg font-medium text-stone-900">{template.name}</h3>
-                      <%= if template.is_system_template do %>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          System
-                        </span>
-                      <% end %>
+          <div class="space-y-8">
+            <%= for {category, templates} <- @grouped_templates do %>
+              <div>
+                <h2 class="text-lg font-semibold text-stone-900 mb-4">{category}</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <%= for template <- templates do %>
+                    <div class="bg-white border border-stone-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer group relative">
+                      <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                          <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <.icon name={get_template_icon(template)} class="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 class="font-medium text-stone-900 text-sm">{template.name}</h3>
+                            <%= if template.is_system_template do %>
+                              <span class="inline-flex items-center text-xs text-stone-500 mt-1">
+                                <.icon name="eye" class="w-3 h-3 mr-1" /> View only
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+                          <button
+                            phx-click="edit_template"
+                            phx-value-id={template.id}
+                            class="p-1 text-stone-400 hover:text-stone-600 rounded"
+                          >
+                            <.icon name="pencil" class="w-4 h-4" />
+                          </button>
+                          <%= unless template.is_system_template do %>
+                            <button
+                              phx-click="delete_template"
+                              phx-value-id={template.id}
+                              data-confirm="Are you sure you want to delete this template?"
+                              class="p-1 text-stone-400 hover:text-red-600 rounded"
+                            >
+                              <.icon name="trash" class="w-4 h-4" />
+                            </button>
+                          <% end %>
+                        </div>
+                      </div>
+
+                      <div class="mb-4">
+                        <h4 class="text-xs font-medium text-stone-900 mb-2">Meeting Context</h4>
+                        <p class="text-xs text-stone-600 leading-relaxed">{template.description}</p>
+                      </div>
+
+                      <div class="mb-4">
+                        <h4 class="text-xs font-medium text-stone-900 mb-2">Sections</h4>
+                        <div class="space-y-1">
+                          <%= for section <- Enum.take(template.sections, 4) do %>
+                            <div class="text-xs text-stone-600">{section}</div>
+                          <% end %>
+                          <%= if length(template.sections) > 4 do %>
+                            <div class="text-xs text-stone-400">
+                              +{length(template.sections) - 4} more...
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
                     </div>
-                    <p class="text-stone-600 mb-3">{template.description}</p>
-                    <div class="flex flex-wrap gap-2">
-                      <%= for section <- template.sections do %>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-800">
-                          {section}
-                        </span>
-                      <% end %>
-                    </div>
-                  </div>
-                  <div class="flex space-x-2 ml-4">
-                    <button
-                      phx-click="edit_template"
-                      phx-value-id={template.id}
-                      class="text-blue-600 hover:text-blue-900 text-sm font-medium"
-                    >
-                      Edit
-                    </button>
-                    <%= unless template.is_system_template do %>
-                      <button
-                        phx-click="delete_template"
-                        phx-value-id={template.id}
-                        data-confirm="Are you sure you want to delete this template?"
-                        class="text-red-600 hover:text-red-900 text-sm font-medium"
-                      >
-                        Delete
-                      </button>
-                    <% end %>
-                  </div>
+                  <% end %>
                 </div>
               </div>
             <% end %>
@@ -233,12 +312,12 @@ defmodule PairWeb.Templates.Index do
                   Get started by creating your first meeting template.
                 </p>
                 <div class="mt-6">
-                  <button
+                  <.button
                     phx-click="new_template"
-                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
                   >
-                    New Template
-                  </button>
+                    Create template
+                  </.button>
                 </div>
               </div>
             <% end %>

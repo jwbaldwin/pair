@@ -201,7 +201,7 @@ defmodule PairWeb.CoreComponents do
   end
 
   @doc """
-  Renders a button.
+  Button component, has primary and default
 
   ## Examples
 
@@ -215,22 +215,35 @@ defmodule PairWeb.CoreComponents do
 
   slot :inner_block, required: true
 
+  def button(%{primary: true} = assigns) do
+    ~H"""
+    <button
+      type={@type}
+      class="inline-block rounded-lg bg-gradient-to-b from-lime-600 to-lime-700 leading-none p-px shadow-sm"
+      {@rest}
+    >
+      <span class="inline-block rounded-[7px] bg-gradient-to-b from-lime-500 to-lime-600 p-px">
+        <span class="inline-flex rounded-[6px] items-center gap-x-1.5 bg-lime-600 px-2 py-2 text-sm text-white">
+          {render_slot(@inner_block)}
+        </span>
+      </span>
+    </button>
+    """
+  end
+
+  # Defualt button
   def button(assigns) do
     ~H"""
     <button
       type={@type}
       class={[
-        "group flex items-center justify-center gap-2 px-2 py-2 border shadow-xs rounded-md text-sm cursor-pointer transition-colors duration-150",
-        @primary &&
-          "text-white border-lime-600 bg-gradient-to-b from-lime-500 via-lime-600 to-lime-700 px-4 text-neutral-50 shadow-[inset_0_1px_0px_0px_#fdba74] active:[box-shadow:none]",
-        !@primary && "bg-white border-stone-200/75 hover:border-stone-300 ",
+        "group flex items-center justify-center gap-2 px-2 py-2 border shadow-xs rounded-lg text-sm cursor-pointer transition-colors duration-150",
+        "bg-white border-stone-200/75 hover:border-stone-300 ",
         @class
       ]}
       {@rest}
     >
-      <span class={if @primary, do: "block group-active:[transform:translate3d(0,1px,0)]", else: ""} ]>
-        {render_slot(@inner_block)}
-      </span>
+      {render_slot(@inner_block)}
     </button>
     """
   end
@@ -328,7 +341,7 @@ defmodule PairWeb.CoreComponents do
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
+        class="mt-2 block w-full rounded-lg border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
         multiple={@multiple}
         {@rest}
       >
